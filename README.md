@@ -89,7 +89,7 @@ performance of algorithms that separate atmospheric and water-leaving radiance, 
 optically complex waters such as coastal seas and inland waters.  High-quality reference measurements are required, 
 collected under optimal observation conditions (solar and viewing azimuth, sun elevation).
 
-####Added Value of So-Rad
+#### Added Value of So-Rad ####
 * Off-shore satellite validation is currently limited to research vessels and fixed moorings that are costly to 
 maintain. The So-Rad can be installed on non-stationary platforms and is ideally suited to be included on merchant 
 vessels. Ferry routes are recommended because of predictable routes and schedules. Periodic sensor maintenance can be 
