@@ -54,17 +54,17 @@ The WISPstation public data were collected by users participating on H2020 funde
 ### Table that shows the overview of available dataset
 Please use the instrument identification serial number and date when searching for data using the WISPcloud API
  
-Instrument ID | Country | Station|Longitude|Latitude|Start Date|End Date|
--------------------------|---------|--------|---------|--------|----------|--------|
-WISPstation001|Italy|Lake Trasimeno|12.344|43.1223|2018-04-30|2018-10-14|
-WISPstation001|Italy|Lake Trasimeno|12.344|43.1223|2019-06-20 |2021-05-04 |
-WISPstation004|Greece|Souda|24.1112|35.4800|2018-07-17|2019-08-09|
-WISPstation005|Estonia|Lake Vortsjarv|26.1074|58.2109|2018-05-28|2018-10-26|
-WISPstation005|Estonia|Lake Vortsjarv|26.1074|58.2109|2019-05-31|2019-11-01|
-WISPstation006|Lithuania|Curonian Lagoon|21.1002|55.4126|2018-08-09|2019-10-14|
-WISPstation007|Lithuania|Klaipeda Harbor| 21.1016|55.7195|2018-08-13|2019-09-11|
-WISPstation009|Hungary|Lake Balaton|17.8936|46.9143|2019-06-17|2019-07-12|
-WISPstation009|Hungary|Halasto|17.6167|46.6342|2019-07-23|2019-10-07|
+| Instrument ID  | Country   | Station         | Longitude | Latitude | Start Date | End Date   |
+|----------------|-----------|-----------------|-----------|----------|------------|------------|
+| WISPstation001 | Italy     | Lake Trasimeno  | 12.344    | 43.1223  | 2018-04-30 | 2018-10-14 |
+| WISPstation001 | Italy     | Lake Trasimeno  | 12.344    | 43.1223  | 2019-06-20 | 2021-05-04 |
+| WISPstation004 | Greece    | Souda           | 24.1112   | 35.4800  | 2018-07-17 | 2019-08-09 |
+| WISPstation005 | Estonia   | Lake Vortsjarv  | 26.1074   | 58.2109  | 2018-05-28 | 2018-10-26 |
+| WISPstation005 | Estonia   | Lake Vortsjarv  | 26.1074   | 58.2109  | 2019-05-31 | 2019-11-01 |
+| WISPstation006 | Lithuania | Curonian Lagoon | 21.1002   | 55.4126  | 2018-08-09 | 2019-10-14 |
+| WISPstation007 | Lithuania | Klaipeda Harbor | 21.1016   | 55.7195  | 2018-08-13 | 2019-09-11 |
+| WISPstation009 | Hungary   | Lake Balaton    | 17.8936   | 46.9143  | 2019-06-17 | 2019-07-12 |
+| WISPstation009 | Hungary   | Halasto         | 17.6167   | 46.6342  | 2019-07-23 | 2019-10-07 |
  
 ### About the api_public access example script
 We made an example to demonstrate how to connect with the WISPcloud api and plot Rrs and ir/radiance measurements using date and instrument serial as an input. 
