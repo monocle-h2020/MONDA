@@ -29,8 +29,10 @@ https://github.com/monocle-h2020/MONDA.git
 You can either clone the repo here and then run pip install from that directory or you can install directly from pypi 
 using:
 
-```pip install monda```
+```python3 -m pip install monda```
 
+For now while we are in test mode it would be just pip installed from the local code directory:
+```pip install .```
 
 ## Citation
 If you use MONDA in a scientific publication, we would appreciate citations: 
