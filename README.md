@@ -38,6 +38,10 @@ For now while we are in test mode it would be just pip installed from the local 
 If you use MONDA in a scientific publication, we would appreciate citations: 
 *add in how we want this citing*
 
+##Contributors
+This code was developed with input from Plymouth Marine laboratory (thja-pml@github, tjor@github, StefaSimis@github) and 
+Water Insight (Semhar-Ghe@github, waterthing@github). 
+
 ## Submodule Information
 The package contains access, qc and analysis tools for different types of sensors that are all used for water quality 
 measurement.  Details of these are provided below.
