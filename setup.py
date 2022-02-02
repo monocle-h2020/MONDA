@@ -6,10 +6,17 @@ with open("README.md", "r") as long_info:
 setup(
     name='monda',
     version='0.0.1',
+    author='',
+    author_email='',
     description='A package for the retrieval, QC and analysis of Data from MONOCLE systems',
+    url='https://github.com/monocle-h2020/MONDA',
     py_modules=["monda"],
     package_dir={'':'src'},
-    packages=['monda', 'monda.WISP', 'monda.WISP.data_access', 'monda.WISP.data_analysis', 'monda.So_Rad'],
+    packages=setuptools.find_packages(where="src"),
     long_description=long_description,
-    long_description_content_type="text/markdown"
+    long_description_content_type="text/markdown",
+    classifiers=["Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Operating System :: OS Independent",],
+    python_requires=">=3.6"
 )
