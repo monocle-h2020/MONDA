@@ -6,7 +6,7 @@ sensors that are included in the MONOCLE observation network.  The tools have be
 MONOCLE project.
 
 The MONOCLE has project created a framework for building integrated water quality sensor networks to enhance the 
-utility and accessiblity of data from multiple sources, giving a more complete data landscape.
+utility and accessibility of data from multiple sources, giving a more complete data landscape.
 
 For more information on the MONOCLE project see:
 [MONOCLE](https://www.monocle-h2020.eu/Home)
@@ -19,14 +19,20 @@ This code requires:
 - Matplotlib (>=3.3.3)
 - requests (>=2.27.1)
 
-## Installation
-pip install monda
-
 # Source code
-To get the most up to date version of the code then checkout the repo with:
+To get the most up to date version of the source code then checkout the repo with:
 ```
 https://github.com/monocle-h2020/MONDA.git
 ```
+
+## Installation
+You can either clone the repo here and then run pip install from that directory or you can install directly from pypi 
+using:
+
+```python3 -m pip install monda```
+
+For now while we are in test mode it would be just pip installed from the local code directory:
+```pip install .```
 
 ## Citation
 If you use MONDA in a scientific publication, we would appreciate citations: 
