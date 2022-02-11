@@ -13,8 +13,6 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022.
 """
 
 import os
-import sys
-sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates

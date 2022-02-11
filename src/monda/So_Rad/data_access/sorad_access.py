@@ -12,9 +12,8 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022.
 
 """
 
-import sys
-sys.path.append("..")
 import logging
+import sys
 import numpy as np
 import datetime
 import argparse
@@ -22,12 +21,10 @@ import json
 import urllib.request
 import urllib.parse
 
-
 log = logging.getLogger('test')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
 formatter = logging.Formatter(myFormat)  
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
-
 
 def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'): # note: previously in geoserver_functions.py
     """Get features in json format and convert data into python friendly format"""

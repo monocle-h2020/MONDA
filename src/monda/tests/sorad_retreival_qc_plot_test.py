@@ -50,15 +50,9 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import os
 import sys
 import numpy as np
-# from monda import sorad_access as access    # to replace local import paths
-# from monda import sorad_plots as plots 
-# from monda import sorad_qc as qc 
-sys.path.append('/users/rsg/tjor/monocle_local/monda/src/monda/So_Rad/data_access') # local import paths (temporary fix)
-sys.path.append('/users/rsg/tjor/monocle_local/monda/src/monda/So_Rad/qc')
-sys.path.append('/users/rsg/tjor/monocle_local/monda/src/monda/So_Rad/data_analysis') 
-import sorad_qc as qc 
-import sorad_access as access
-import sorad_plots as plots
+from monda.So_Rad.qc import sorad_qc as qc
+from monda.So_Rad.data_access import sorad_access as access
+from monda.So_Rad.data_analysis import sorad_plots as plots
 import datetime
 import logging
 import pandas as pd
