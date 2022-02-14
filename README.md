@@ -54,14 +54,14 @@ which enables continuous and autonomous high-quality measurements for water qual
 The reflectance observations are used to validate satellite measurements of water-leaving reflectance. 
 Concentrations of the most important bio-physical water quality parameters such as chlorophyll-a, cyanobacterial pigment, turbidity and suspended matter, are derived from the reflectance measurement. The WISPstation sends the measurements automatically over 3G/4G/5G to the “WISPcloud” cloud database which makes the results available via an API. Measurement frequency is by default a 15 min interval but be adjusted to suit user requirements. 
 
-### About WISPcloud
+#### About WISPcloud
 WISPcloud is a scalable Postgres database that autonomously receives, stores, performs quality control and 
 applies water quality algorithms to all WISPstation measurements. It has an advanced API to serve data requests directly to customers. A separate online documentation can be found here. 
 
-### Acknowledgement 
+#### Acknowledgement 
 The WISPstation public data were collected by users participating on H2020 funded projects such as EOMORES(http://eomores-h2020.eu), TAPAS(http://tapas-h2020.eu/) and MONOCLE(https://monocle-h2020.eu/). 
 
-### Example data availability
+#### Example data availability
 Please use the instrument identification serial number and date when searching for data using the WISPcloud API
  
 | Instrument ID  | Country   | Station         | Longitude | Latitude | Start Date | End Date   |
@@ -76,7 +76,7 @@ Please use the instrument identification serial number and date when searching f
 | WISPstation009 | Hungary   | Lake Balaton    | 17.8936   | 46.9143  | 2019-06-17 | 2019-07-12 |
 | WISPstation009 | Hungary   | Halasto         | 17.6167   | 46.6342  | 2019-07-23 | 2019-10-07 |
  
-### About the api_public access example script
+#### Functionality of the submodule
 An example script is provided to connect with the WISPcloud API and subsequently plot Rrs and (ir)radiance measurements using date and instrument serial number as input arguments. 
 
 
@@ -94,10 +94,13 @@ performance of algorithms that separate atmospheric and water-leaving radiance, 
 optically complex waters such as coastal seas and inland waters.  High-quality reference measurements are required, 
 collected under optimal observation conditions (solar and viewing azimuth, sun elevation).
 
-#### Added Value of So-Rad ####
+### Added Value of So-Rad ####
 * Off-shore satellite validation is currently limited to research vessels and fixed moorings that are costly to 
 maintain. The So-Rad can be installed on non-stationary platforms and is ideally suited to be included on merchant 
 vessels. Ferry routes are recommended because of predictable routes and schedules. Periodic sensor maintenance can be 
 easily carried out by non-expert crew.
 * A high degree of automation and low-power components means the platform can be installed in remote locations for 
 autonomous operation.
+
+### Functionality of the submodule
+The scripts provided demonstrate how to download paged data from the So-Rad Geoserver layers hosted at PML. These layers offer unfiltered, calibrated (ir)radiance and reflectance spectra. The reflectance data are processed either with the Fingerprint or the 3C method. Subsequently, quality control filters can be applied and data visualized. The scripts allow downloads per time window and per instrument. 
