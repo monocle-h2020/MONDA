@@ -1,15 +1,15 @@
-# MONDA (MONocle DAta package)
+# MONDA (MONocle DAta Analysis)
 
 ## Package Description
-This package contains a suite of tools for retrieving, apply quality checks, analysing and plotting data from the 
-sensors that are included in the MONOCLE observation network.  The tools have been developed within the work of the 
-MONOCLE project.
+This package contains a suite of tools for retrieving, apply quality checks to, analysing and plotting data from the 
+sensors and platforms included in the MONOCLE observation network. This project has received funding from the 
+European Union’s Horizon 2020 research and innovation programme under grant agreement No 776480
 
-The MONOCLE has project created a framework for building integrated water quality sensor networks to enhance the 
-utility and accessibility of data from multiple sources, giving a more complete data landscape.
+The MONOCLE project created a framework for building water quality sensor and platforms, networked to enhance the 
+utility and accessibility of data from multiple sources, giving a more complete data landscape to support satellite
+observation of water quality in optically complex coastal waters, lakes and estuaries.
 
-For more information on the MONOCLE project see:
-[MONOCLE](https://www.monocle-h2020.eu/Home)
+For more information on the MONOCLE project see the [project website](https://www.monocle-h2020.eu/Home)
 
 ## Dependencies
 This code requires:
