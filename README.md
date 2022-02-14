@@ -1,4 +1,4 @@
-# MONDA (MONocle DAta Analysis)
+# MONDA (MONocle Data Analysis)
 
 ![monocle_logo](https://avatars1.githubusercontent.com/u/36449994?s=200&v=4)
 
