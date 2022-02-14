@@ -27,7 +27,7 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 # sub routines
 def wl_find(wl, target):
     "Finds wavelength index nearest to target"
-   
+
     return np.argmin((np.array(wl)-target)**2)
 
 

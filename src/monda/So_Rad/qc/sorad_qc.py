@@ -12,8 +12,6 @@ Quality control functions output a logical mask using convention:
 Tom Jordan - tjor@pml.ac.uk - Feb 2022
 """
 
-import sys
-sys.path.append("..")
 import numpy as np
 import datetime
 import pandas as pd 
