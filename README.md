@@ -6,21 +6,24 @@ sensors that are included in the MONOCLE observation network.  The tools have be
 MONOCLE project.
 
 The MONOCLE has project created a framework for building integrated water quality sensor networks to enhance the 
-utility and accessiblity of data from multiple sources, giving a more complete data landscape.
+utility and accessibility of data from multiple sources, giving a more complete data landscape.
 
 For more information on the MONOCLE project see:
 [MONOCLE](https://www.monocle-h2020.eu/Home)
 
 ## Dependencies
 This code requires:
-- Python (>= 3.6)
+- Python (>= 3.8)
 - NumPy (>= 1.13.3)
 - scikit-learn(>=0.23.2)
 - Matplotlib (>=3.3.3)
 - requests (>=2.27.1)
-
+- cartopy (>=0.20.2)
 ## Installation
-pip install monda
+**NOTE:** Some users have encountered issues installing into a fresh conda environment with pip due to GEOS 
+versions.  This can be solved by installing cartopy with conda (```conda install cartopy```) before installing monda using pip.
+
+```pip install monda```
 
 # Source code
 To get the most up to date version of the code then checkout the repo with:
