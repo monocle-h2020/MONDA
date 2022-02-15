@@ -1,15 +1,17 @@
-# MONDA (MONocle DAta package)
+# MONDA (MONocle Data Analysis)
+
+![monocle_logo](https://avatars1.githubusercontent.com/u/36449994?s=200&v=4)
 
 ## Package Description
-This package contains a suite of tools for retrieving, apply quality checks, analysing and plotting data from the 
-sensors that are included in the MONOCLE observation network.  The tools have been developed within the work of the 
-MONOCLE project.
+This package contains a suite of tools for retrieving, apply quality checks to, analysing and plotting data from the 
+sensors and platforms included in the MONOCLE observation network. This project has received funding from the 
+European Union’s Horizon 2020 research and innovation programme under grant agreement No 776480
 
-The MONOCLE has project created a framework for building integrated water quality sensor networks to enhance the 
-utility and accessibility of data from multiple sources, giving a more complete data landscape.
+The MONOCLE project created a framework for building water quality sensor and platforms, networked to enhance the 
+utility and accessibility of data from multiple sources, giving a more complete data landscape to support satellite
+observation of water quality in optically complex coastal waters, lakes and estuaries.
 
-For more information on the MONOCLE project see:
-[MONOCLE](https://www.monocle-h2020.eu/Home)
+For more information on the MONOCLE project see the [project website](https://www.monocle-h2020.eu/Home)
 
 ## Dependencies
 This code requires:
@@ -26,35 +28,46 @@ versions.  This can be solved by installing cartopy with conda (```conda install
 ```pip install monda```
 
 # Source code
-To get the most up to date version of the code then checkout the repo with:
+To get the most up to date version of the source code please see the repository at:
 ```
 https://github.com/monocle-h2020/MONDA.git
 ```
+
+## Installation
+You can either clone the repo here and then run pip install from that directory or you can install directly from pypi 
+using:
+
+```python3 -m pip install monda```
+
+For now while we are in test mode it would be just pip installed from the local code directory:
+```pip install .```
 
 ## Citation
 If you use MONDA in a scientific publication, we would appreciate citations: 
 *add in how we want this citing*
 
-## Submodule Information
-The package contains access, qc and analysis tools for different types of sensors that are all used for water quality 
-measurement.  Details of these are provided below.
+##Contributors
+This code was developed with input from Plymouth Marine laboratory (thja-pml@github, tjor@github, StefaSimis@github) and 
+Water Insight (Semhar-Ghe@github, waterthing@github). 
 
+## Submodule Information
+The package contains access, quality control and visualisation tools for a number of sensor systems, for which details are provided below.
 
 ### WISP (station)
 The WISPstation is a fixed position optical instrument used for measuring water-leaving reflectance.
-It records radiance and irradiance with an extended wavelength range of 350nm to 1100nm in two carefully chosen viewing directions,
+It records radiance and irradiance with an extended wavelength range of 350nm to 1100nm in two viewing directions,
 which enables continuous and autonomous high-quality measurements for water quality monitoring and satellite validation. 
 The reflectance observations are used to validate satellite measurements of water-leaving reflectance. 
-In addition to the reflectance it determines the concentrations of the most important bio-physical water quality parameters such as chlorophyll, cyanobacterial pigment, turbidity and suspended matter.
-The WISPstation sends the measurements automatically over 3G/4G/5G to our cloud database “WISPcloud”, which makes the results available via an API. Measurement frequency is by default is 15min interval ,but it can easily be adjusted to suit the user’s requirements. 
-### About WISPcloud
+Concentrations of the most important bio-physical water quality parameters such as chlorophyll-a, cyanobacterial pigment, turbidity and suspended matter, are derived from the reflectance measurement. The WISPstation sends the measurements automatically over 3G/4G/5G to the “WISPcloud” cloud database which makes the results available via an API. Measurement frequency is by default a 15 min interval but be adjusted to suit user requirements. 
+
+#### About WISPcloud
 WISPcloud is a scalable Postgres database that autonomously receives, stores, performs quality control and 
 applies water quality algorithms to all WISPstation measurements. It has an advanced API to serve data requests directly to customers. A separate online documentation can be found here. 
 
-### Acknowledgement 
+#### Acknowledgement 
 The WISPstation public data were collected by users participating on H2020 funded projects such as EOMORES(http://eomores-h2020.eu), TAPAS(http://tapas-h2020.eu/) and MONOCLE(https://monocle-h2020.eu/). 
 
-### Table that shows the overview of available dataset
+#### Example data availability
 Please use the instrument identification serial number and date when searching for data using the WISPcloud API
  
 | Instrument ID  | Country   | Station         | Longitude | Latitude | Start Date | End Date   |
@@ -69,20 +82,15 @@ Please use the instrument identification serial number and date when searching f
 | WISPstation009 | Hungary   | Lake Balaton    | 17.8936   | 46.9143  | 2019-06-17 | 2019-07-12 |
 | WISPstation009 | Hungary   | Halasto         | 17.6167   | 46.6342  | 2019-07-23 | 2019-10-07 |
  
-### About the api_public access example script
-We made an example to demonstrate how to connect with the WISPcloud api and plot Rrs and ir/radiance measurements using date and instrument serial as an input. 
-
-#### username & password to access WISPcloud public API 
-Username : public_access
-Password:  WISPstation
+#### Functionality of the submodule
+An example script is provided to connect with the WISPcloud API and subsequently plot Rrs and (ir)radiance measurements using date and instrument serial number as input arguments. 
 
 
 ### So-Rad
-
-The So-Rad is a low-power, low cost autonomous system to obtain high-frequency water-leaving reflectance from 
+The So-Rad is a low-power, low cost autonomous platform to obtain high-frequency water-leaving reflectance from 
 non-stationary platforms such as ships and buoys. So-Rad software is highly configurable and open-source. 
 So-Rad optimizes the measurement geometry of commercially available sensors which increases the number of successful 
-observations of water colour obtained from moving platforms (Simis and Olsson 2013). 
+observations of water colour obtained from moving platforms (concept as in Simis and Olsson 2013). 
 
 Hyperspectral water-leaving reflectance is used to determine diagnostic features in water colour that can be 
 associated with phytoplankton biomass, suspended solids and dissolved organic matter concentration.
@@ -99,3 +107,6 @@ vessels. Ferry routes are recommended because of predictable routes and schedule
 easily carried out by non-expert crew.
 * A high degree of automation and low-power components means the platform can be installed in remote locations for 
 autonomous operation.
+
+#### Functionality of the submodule
+The scripts provided demonstrate how to download paged data from the So-Rad Geoserver layers hosted at PML. These layers offer unfiltered, calibrated (ir)radiance and reflectance spectra. The reflectance data are processed either with the Fingerprint or the 3C method. Subsequently, quality control filters can be applied and data visualized. The scripts allow downloads per time window and per instrument. 
