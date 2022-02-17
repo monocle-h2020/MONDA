@@ -1,5 +1,6 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
+import sys
+print(sys.path)
 """
 
 Monda test script to retrieve So-Rad Rrs spectra from PML Geoserver using WFS standard, 
