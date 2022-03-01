@@ -12,7 +12,6 @@ import logging
 import sys
 import numpy as np
 import datetime
-import argparse
 import json
 import urllib.request
 import urllib.parse
@@ -165,17 +164,3 @@ def get_l1spectra(response, spec_id, wl):
         i = i + 1
 
     return spec_matrix
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-a','--algorithm', required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
-    parser.add_argument('-p','--platform', required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
-    parser.add_argument('-i','--intial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,21) - datetime.timedelta(days=1),help = "Intial day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-f','--final_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,22), help = "Intial day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-t','--target', required = False, type = str, default='SoRad_testoutput', help = "Target folder for plots to be written to (defaults to current folder).")
-    parser.add_argument('-s','--spectra', required = False, type = bool, default = False, help = "Option to output ls, lt, ed spectra")
-
-    args = parser.parse_args()
-
-    return args
