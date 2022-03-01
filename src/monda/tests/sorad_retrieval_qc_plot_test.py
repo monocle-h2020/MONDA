@@ -63,7 +63,10 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def run_example_fp(platform_id = 'PML_SR004', final_day = datetime.date.today() - datetime.timedelta(days=1), initial_day = datetime.date.today() - datetime.timedelta(days=1), target='.', spectra = False):
+def run_example_fp(platform_id = 'PML_SR004',
+                   final_day = datetime.date.today() - datetime.timedelta(days=1),
+                   initial_day = datetime.date.today() - datetime.timedelta(days=1),
+                   target='.', spectra = False):
     """ fp quality control, results plots, and data output (daily data binning) """
 
     days = (final_day - initial_day).days + 1
@@ -157,8 +160,10 @@ def run_example_fp(platform_id = 'PML_SR004', final_day = datetime.date.today() 
     return response
 
 
-def run_example_3c(platform_id = 'PML_SR004', final_day = datetime.date.today() - datetime.timedelta(days=1),
-                   initial_day = datetime.date.today() - datetime.timedelta(days=1), target = '.', spectra = False):
+def run_example_3c(platform_id = 'PML_SR004',
+                   final_day = datetime.date.today() - datetime.timedelta(days=1),
+                   initial_day = datetime.date.today() - datetime.timedelta(days=1),
+                   target = '.', spectra = False):
     """ 3c quality control, results plots, and data output (daily data binning) """
 
     days = (final_day - initial_day).days + 1
@@ -265,10 +270,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a','--algorithm', required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
     parser.add_argument('-p','--platform', required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
-    parser.add_argument('-i','--intial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,21) - datetime.timedelta(days=1),help = "Intial day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-f','--final_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,22), help = "Intial day in format ['yyyy-mm-dd]'] ")
+    parser.add_argument('-i','--initial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,21) - datetime.timedelta(days=1),help = "Initial day in format ['yyyy-mm-dd]'] ")
+    parser.add_argument('-f','--final_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,22), help = "Final day in format ['yyyy-mm-dd]'] ")
     parser.add_argument('-t','--target', required = False, type = str, default='SoRad_testoutput', help = "Target folder for plots to be written to (defaults to current folder).")
-    parser.add_argument('-s','--spectra', required = False, type = bool, default = False, help = "Option to output ls, lt, ed spectra")
+    parser.add_argument('-s','--spectra', required = False, type = bool, default = False, help = "Output Ls, Lt, Ed spectra")
 
     args = parser.parse_args()
 
@@ -285,7 +290,6 @@ if __name__ == '__main__':
             os.mkdir(os.path.join(os.getcwd() + '/' + args.target))
 
     if args.algorithm.lower() == 'fp':
-        response = run_example_fp(args.platform, args.final_day, args.intial_day, args.target, args.spectra)
+        response = run_example_fp(args.platform, args.final_day, args.initial_day, args.target, args.spectra)
     elif args.algorithm.lower()  == '3c':
-        response = run_example_3c(args.platform, args.final_day, args.intial_day, args.target, args.spectra)
-
+        response = run_example_3c(args.platform, args.final_day, args.initial_day, args.target, args.spectra)
