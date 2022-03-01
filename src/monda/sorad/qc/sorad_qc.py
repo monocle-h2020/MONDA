@@ -14,17 +14,16 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 
 import numpy as np
 import datetime
-import pandas as pd 
+import pandas as pd
 
 
 # sub routines
 def wl_find(wl, target):
     "Finds wavelength index nearest to target"
-   
     return np.argmin((np.array(wl)-target)**2)
 
 
-def combined_filter(q_1, q_2): 
+def combined_filter(q_1, q_2):
    """Combines 2 QC masks - tests for failures subject to logical OR condition"""
 
    q_combined = np.ones(len(q_1))
@@ -37,21 +36,20 @@ def combined_filter(q_1, q_2):
 
 def nearest(items, pivot):
      """Sub function used to locate nearest values indicies in list x relative to a pivot - used within rolling variability """
-    
+
      nearest_value = min(items, key=lambda x: abs(x - pivot)) # finds nearest value
      nearest_index = items.index(min(items, key=lambda x: abs(x - pivot))) # finds nearest index
 
      return nearest_value, nearest_index
- 
-    
+
 
 # Filters used in QC of l and e spectra (Step 1 in 3C and FP chain)
 def qc_lt_ed_filter(ed, lt, time, wl, threshold = 0.020):
     """Funtion to filter by lt_ed ratio in NIR: basic implementation using absolute threshold defined in sr^-1 on [850, 950] nm"""
 
-    lt_ed = np.divide(lt,ed)
-    lambda_l = wl_find(800,wl)
-    lambda_h = wl_find(950,wl)
+    lt_ed = np.divide(lt, ed)
+    lambda_l = wl_find(800, wl)
+    lambda_h = wl_find(950, wl)
     lw_ratio = np.nanmax(lt_ed[:,lambda_l:lambda_h], axis=1)
 
     q_ratio =  np.ones(len(ed))
@@ -62,9 +60,9 @@ def qc_lt_ed_filter(ed, lt, time, wl, threshold = 0.020):
 
 def qc_ed_filter(ed, min_ed_threshold = 500):
     """Function to filter by the minimum (spectral max) ed value"""
-    
-    q_ed =  np.ones(len(ed)) # qc 
-    spec_max_ed = np.nanmax(ed.T,0) # spectral max for Ed
+
+    q_ed =  np.ones(len(ed)) # qc
+    spec_max_ed = np.nanmax(ed.T, 0) # spectral max for Ed
     q_ed[spec_max_ed < min_ed_threshold] = 0
 
     return q_ed
@@ -73,12 +71,12 @@ def qc_ed_filter(ed, min_ed_threshold = 500):
 def qc_ls_filter(ls, wl, threshold = 1):
     """Funtion to filter out ls spectra that are anomalously high in NIR"""
 
-    lambda_1l = wl_find(550,wl) # central wavelength band 
-    lambda_1h = wl_find(580,wl)
-    lambda_2l = wl_find(800,wl) # long wavelength band
-    lambda_2h = wl_find(950,wl)
+    lambda_1l = wl_find(550, wl) # central wavelength band
+    lambda_1h = wl_find(580, wl)
+    lambda_2l = wl_find(800, wl) # long wavelength band
+    lambda_2h = wl_find(950, wl)
 
-    ls_ratio = np.nanmax(ls[:,lambda_2l:lambda_2h],axis=1)/np.nanmax(ls[:,lambda_1l:lambda_1h],axis=1)
+    ls_ratio = np.nanmax(ls[:,lambda_2l:lambda_2h], axis=1) / np.nanmax(ls[:,lambda_1l:lambda_1h], axis=1)
 
     q_ls =  np.ones(len(ls)) # qc mask: 1=valid, 0=not valid
     q_ls[ls_ratio > threshold] = 0
@@ -87,7 +85,7 @@ def qc_ls_filter(ls, wl, threshold = 1):
 
 
 # 3C-specific filtering (step 2 in 3C QC chain)
-def qc_3cresidual(q_rad,resid,tol = 3):  # QC filter based on std of 3C residual daily distribtion (considers subset that has passed radiometric QC)
+def qc_3cresidual(q_rad,resid,tol = 3):
     """3C residual fliter based on standard deviation of daily rmsd ditribution that has
        already passed radiometric quality control. tol is a standard deviation multiple
        with 3*sigma set to default"""
@@ -104,18 +102,18 @@ def qc_3c_rho_filter(rho_ds, rho_dd, rho_s, upperbound = 0.1):
     """Function to remove 3C retreivals where rho factors terminate on upper optimzation bound
     (note: not strictly required for lower optimzation bound)"""
 
-    q_rho3c =  np.ones(len(rho_ds)) #
-    
+    q_rho3c =  np.ones(len(rho_ds))
+
     q_rho3c[np.abs(rho_ds  - upperbound) < 0.001] = 0
     q_rho3c[np.abs(rho_dd  - upperbound) < 0.001] = 0
     q_rho3c[np.abs(rho_s - upperbound) < 0.001] = 0
-    
+
     return q_rho3c
 
 
 # filters used in qc of Rrs spectra: Step 3 in 3C chain and 2 in FP chain)
 def qc_SS_NIR_filter(wl, rrs, upperthreshold = 3, lowerthreshold = 0.5):
-    ''' filter based on NIR similarity spectrum (reflectance ratio of 779 and 865 nm) in Ruddick et al. 2006. '''
+    """Filter based on NIR similarity spectrum (reflectance ratio of 779 and 865 nm) in Ruddick et al. 2006."""
 
     lambda779 = wl_find(wl, 779)
     lambda865 = wl_find(wl, 865)
@@ -125,48 +123,50 @@ def qc_SS_NIR_filter(wl, rrs, upperthreshold = 3, lowerthreshold = 0.5):
     q_ss =  np.ones(len(rrs)) # qc mask: 1=valid, 0=not valid
     q_ss[r779_865  > upperthreshold] = 0
     q_ss[r779_865  < lowerthreshold] = 0
-    
+
     return q_ss
 
 
 def qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.0):
-    ''' filter based on range of rrs maximum '''
- 
-    q_maxrange = np.ones(len(rrs)) 
-    
+    """ Filter based on range of rrs maximum """
+
+    q_maxrange = np.ones(len(rrs))
+
     rrs_max = np.nanmax(rrs,axis=1)
     q_maxrange[rrs_max > upperthreshold] = 0
     q_maxrange[rrs_max < lowerthreshold] = 0
-    
+
     return q_maxrange
 
 
 def qc_rrs_min(rrs, wl):
-    ''' Replicates filtering step in FP processing that Rrs must be > 0 on [370,700] nm  
-    but applied to Rrs with offset included '''
-    
-    q_min = np.ones(len(rrs)) #
-    
+    """ Replicates filtering step in FP processing that Rrs must be > 0 on [370,700] nm
+    but applied to Rrs with offset included"""
+
+    q_min = np.ones(len(rrs))
+
     lambda375 = wl_find(wl,375)
     lambda700= wl_find(wl,700)
-    
+
     rrs_min = np.nanmin(rrs[:,lambda375:lambda700],axis=1)
     q_min[rrs_min <  0] = 0
-        
+
     return q_min
 
 
 # optional filters (not currently applied in FP and 3C chain)
 def rolling_variability(spectrum, timestamp ,window_time, wl_range):
-    """Sub funtion to calculate rolling spectral variability metrics based on z-score (std normalized spectra) and percentage differences (mean normalized spectra).
+    """ Sub funtion to calculate rolling spectral variability metrics based on z-score (std normalized spectra) and percentage differences (mean normalized spectra).
     Based on function in Groetsch et. al 2017
-    # Work flow: 
+
+    # Work flow:
     # (i) converts timestamp and spectra to data frame format (indexed by timestamp, rows wavelengths)
     # (ii) calculates rolling mean and standrad deviations using dataframe method
     # (iii) re-references rolling mean/std to window center
     # (iv) computes rolling z-score and percentage difference metrics
-    # Input - window size in minutes and l or e spectrum 
-    # Notes - data gaps in rolling mean/std are handled via linear interpolation (default setting of rolling functions in pandas)"""
+    # Input - window size in minutes and l or e spectrum
+    # Notes - data gaps in rolling mean/std are handled via linear interpolation (default setting of rolling functions in pandas)
+    """
 
     # (i) dataframe format
     window_time_secs = window_time*60 # converts to secs
@@ -206,7 +206,7 @@ def rolling_variability(spectrum, timestamp ,window_time, wl_range):
 
 
 def qc_radiometric_variability(ed, lt, ls, time, wl, windowlength = 60, var_threshold = 1.1, var_metric = 'zscore_max'):
-   """Filters out local variability anomalie of input l and e spectra based on rolling 
+   """Filters out local variability anomalie of input l and e spectra based on rolling
       variability metric (spectral maxium of absolute z-score as default) """
 
    if var_metric ==  'pct_diff_max':
