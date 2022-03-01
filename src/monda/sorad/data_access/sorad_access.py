@@ -1,14 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-
 Monda access functions to retrieve So-Rad data from PML Geoserver using WFS standard.
-
-Includes functions to convert level 0 spectra to level 1 spectra
-
 ------------------------------------------------------------------------------
-
-Tom Jordan - tjor@pml.ac.uk - Feb 2022.
+Tom Jordan - tjor@pml.ac.uk - Feb 2022
+Stefan Simis - stsi@pml.ac.uk - Feb 2022
 
 """
 
@@ -21,17 +17,18 @@ import json
 import urllib.request
 import urllib.parse
 
-log = logging.getLogger('test')
+log = logging.getLogger('sorad-downloader')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
-formatter = logging.Formatter(myFormat)  
+formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
-def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'): # note: previously in geoserver_functions.py
+
+def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'):
     """Get features in json format and convert data into python friendly format"""
     time_start = datetime.datetime.strftime(timewindow[0], '%Y-%m-%dT%H:%M:%SZ')
     time_end   = datetime.datetime.strftime(timewindow[1], '%Y-%m-%dT%H:%M:%SZ')
 
-    # build CQL filter
+    # build a CQL filter to get a time slice
     cql = ''
     if timewindow is not None:
         cql += f"time between {time_start} AND {time_end}"
@@ -41,7 +38,7 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
         cql += f"""platform_id='{platform}'"""
 
     # sanity-check the request count
-    layer_limit = 10000  # sadly there isn't a clear way to request this from the server
+    layer_limit = 10000  # geoserver layer is limited to 10,000 items per request
     if count > layer_limit:
         log.warning(f"Feature request count adjusted to {layer_limit} as supported by this server")
         count = layer_limit
@@ -76,6 +73,7 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
         return None
 
     if count < hits:
+        # the number of features matching the request exceeds the volume we have set to retreive in one go
         npages = int(np.ceil(hits/count))
         log.info(f"Need to page the request: {npages} pages")
     else:
@@ -85,7 +83,7 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
     for page in range(npages):
         startIndex = page * count
         paged_wfs_url = wfs_url + f"&startIndex={startIndex}"
-        log.info(paged_wfs_url)  # change to debug later
+        log.debug(paged_wfs_url)
 
         try:
             resp = urllib.request.urlopen(paged_wfs_url).read()
@@ -130,23 +128,8 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
     return {'result':paged_result, 'length':len(paged_result)}
 
 
-def parse_args():
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-a','--algorithm', required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
-    parser.add_argument('-p','--platform', required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
-    parser.add_argument('-i','--intial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,21) - datetime.timedelta(days=1),help = "Intial day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-f','--final_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,22), help = "Intial day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-t','--target', required = False, type = str, default='SoRad_testoutput', help = "Target folder for plots to be written to (defaults to current folder).")
-    parser.add_argument('-s','--spectra', required = False, type = bool, default = False, help = "Option to output ls, lt, ed spectra")
-   
-    args = parser.parse_args()
-    
-    return args
-
-
 def get_wl(res, spec_id):
-    """Reconstruct level 1 wavelength grid for level 0 l and e spectra based on calibration records"""
+    """Reconstruct wavelength grid from information from most recent calibration records (only for L1 (ir)radiance spectra)"""
 
     nbands = len(res[spec_id + 'spectrum'])
     wave = [0.0] * nbands
@@ -166,8 +149,8 @@ def get_l1spectra(response, spec_id, wl):
     (Ir)radiance spectrum as a 2D matrix sampled on common wavelength grid
 
     response: response from WFS
-    spec_id: 
-    wl: wavelength grid
+    spec_id:  identifier
+    wl:       wavelength grid
 
     output:
     ndarray with rows timestamp index, columns wavelength
@@ -182,3 +165,17 @@ def get_l1spectra(response, spec_id, wl):
         i = i + 1
 
     return spec_matrix
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a','--algorithm', required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
+    parser.add_argument('-p','--platform', required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
+    parser.add_argument('-i','--intial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,21) - datetime.timedelta(days=1),help = "Intial day in format ['yyyy-mm-dd]'] ")
+    parser.add_argument('-f','--final_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,22), help = "Intial day in format ['yyyy-mm-dd]'] ")
+    parser.add_argument('-t','--target', required = False, type = str, default='SoRad_testoutput', help = "Target folder for plots to be written to (defaults to current folder).")
+    parser.add_argument('-s','--spectra', required = False, type = bool, default = False, help = "Option to output ls, lt, ed spectra")
+
+    args = parser.parse_args()
+
+    return args
