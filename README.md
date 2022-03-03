@@ -27,6 +27,12 @@ versions.  This can be solved by installing cartopy with conda (```conda install
 
 ```pip install monda```
 
+Example creating MONOCLE conda environment and then installing monda package:
+```
+conda create --name monocle_test python=3.8 cartopy 
+conda activate monocle_test
+pip install monda  ( WHILE TESTING LOCALLY: pip install -e . )
+```
 # Source code
 To get the most up to date version of the source code please see the repository at:
 ```

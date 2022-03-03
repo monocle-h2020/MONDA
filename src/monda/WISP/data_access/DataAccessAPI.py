@@ -19,7 +19,7 @@ def WISP_data_API_call(request_string, output_file=None):
         datastring = io.StringIO(requests.get(url_string, auth=(username, password)).content.decode('utf-8'))
         print(datastring.read(), file=open(output_file, 'w'))
     else:
-        print('no filename provided to write output into')
+        print('confirming that no filename was provided to write output into')
     datastring = io.StringIO(requests.get(url_string, auth=(username, password)).content.decode('utf-8'))
     data = list(csv.DictReader(filter(lambda row: row[0] != '#', datastring), delimiter='\t'))
     return data
