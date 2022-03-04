@@ -40,11 +40,13 @@ https://github.com/monocle-h2020/MONDA.git
 ```
 
 ## Citation
-If you use MONDA in a scientific publication, we would appreciate citations: 
-To cite the package as a whole you can use:
+If you use MONDA in a scientific publication, we would appreciate citations.  
+
+To cite the package as a whole you can use:  
 Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA 
-For single submodules (such as WISP or sorad) please use:
-<submodule> In Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA
+
+For single submodules (such as WISP or sorad) please use:  
+[submodule] In Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA
 
 ##Contributors
 This code was developed with input from Plymouth Marine laboratory (thja-pml@github, tjor@github, StefaSimis@github) and 
