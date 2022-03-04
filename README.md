@@ -31,7 +31,7 @@ Example creating MONOCLE conda environment and then installing monda package:
 ```
 conda create --name monocle_test python=3.8 cartopy 
 conda activate monocle_test
-pip install monda  ( WHILE TESTING LOCALLY: pip install -e . )
+pip install monda 
 ```
 # Source code
 To get the most up to date version of the source code please see the repository at:
@@ -39,18 +39,12 @@ To get the most up to date version of the source code please see the repository 
 https://github.com/monocle-h2020/MONDA.git
 ```
 
-## Installation
-You can either clone the repo here and then run pip install from that directory or you can install directly from pypi 
-using:
-
-```python3 -m pip install monda```
-
-For now while we are in test mode it would be just pip installed from the local code directory:
-```pip install .```
-
 ## Citation
 If you use MONDA in a scientific publication, we would appreciate citations: 
-*add in how we want this citing*
+To cite the package as a whole you can use:
+Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA 
+For single submodules (such as WISP or sorad) please use:
+<submodule> In Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA
 
 ##Contributors
 This code was developed with input from Plymouth Marine laboratory (thja-pml@github, tjor@github, StefaSimis@github) and 
