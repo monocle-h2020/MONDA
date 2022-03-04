@@ -48,7 +48,7 @@ Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda
 For single submodules (such as WISP or sorad) please use:  
 [submodule] In Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA
 
-##Contributors
+## Contributors
 This code was developed with input from Plymouth Marine laboratory (thja-pml@github, tjor@github, StefaSimis@github) and 
 Water Insight (Semhar-Ghe@github, waterthing@github). 
 
