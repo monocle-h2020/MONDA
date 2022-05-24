@@ -187,7 +187,7 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=11):
         ax.add_image(request, map_resolution)
         ax.set_extent(extent, ccrs.PlateCarree())
         gl = ax.gridlines(draw_labels=True)
-        gl.xlabels_top = gl.ylabels_right = False
+        gl.top_labels_top = gl.right_labels = False
         gl.xformatter =  LONGITUDE_FORMATTER
         gl.yformatter =  LATITUDE_FORMATTER
         gl.xlabel_style = {'size': 12,  'rotation':45}
