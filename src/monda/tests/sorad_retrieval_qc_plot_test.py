@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
-import sys
-print(sys.path)
 """
 
 Monda test script to retrieve So-Rad Rrs and (ir)radiance spectra from PML Geoserver using WFS standard,
 filter data using Quality Control principles, plot results, save Rrs spectra and core metadata (including QC masks)
-
-Data access is provided from sorad.data_access.sorad_access, quality control is provided from sorad.qc.sorad_qc
-and plots is provided from sorad.data_analysis.sorad_plots
 
 ---------------------------------------------------------------------------------
 
@@ -38,8 +33,8 @@ Default quality control chain for FP:
        Note: `algorithmic filtering' is already applied to FP data on the geoserver (based on rho_s bounds)
 
 Optional filters:
-       (i) Rrs shape based filtering (currently includes `coastal water filter' from Warren et al. 2019). Users are encouraged to 
-       apply filters for their local water type
+       (i) Rrs shape based filtering (currently includes `coastal water filter' from Warren et al. 2019). 
+           Users are encouraged to apply filters for their local water type
        (ii) Variability filtering (based on z-score), following Groetsch et al. 2017.
 
 ------------------------------------------------------------------------------
@@ -47,15 +42,14 @@ Optional filters:
 Tom Jordan - tjor@pml.ac.uk - Feb 2022
 """
 
+import sys
 import os
 import numpy as np
-import monda
-from monda.sorad.qc import sorad_qc as qc
-from monda.sorad.data_access import sorad_access as access
-from monda.sorad.data_analysis import sorad_plots as plots
+from monda.sorad import access, plots, qc
 import datetime
 import logging
 import pandas as pd
+import argparse
 
 log = logging.getLogger('sorad-test')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
@@ -64,10 +58,13 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
 def run_example_fp(platform_id = 'PML_SR004',
-                   final_day = datetime.date.today() - datetime.timedelta(days=1),
-                   initial_day = datetime.date.today() - datetime.timedelta(days=1),
+                   initial_day = datetime.datetime(2021,10,21,0,0,0),
+                   final_day = datetime.datetime(2021,10,22,0,0,0),
                    target='.', spectra = False):
-    """ fp quality control, results plots, and data output (daily data binning) """
+    """
+    Download data from a specific So-Rad platform processed to Rrs using the Fingerprint algorithm.
+    Apply quality control filters and plot results, save output in daily bins
+    """
 
     days = (final_day - initial_day).days + 1
     for i in range(days):
@@ -75,7 +72,10 @@ def run_example_fp(platform_id = 'PML_SR004',
         datetime_i = initial_day + datetime.timedelta(days = i)
         datetime_iplus1 = initial_day + datetime.timedelta(days = i+1)
 
-        response = access.get_wfs(platform = platform_id, timewindow = (datetime_i, datetime_iplus1), layer='rsg:sorad_public_view_fp_full')
+        response = access.get_wfs(platform = platform_id,
+                                  timewindow = (datetime_i, datetime_iplus1),
+                                  layer='rsg:sorad_public_view_fp_full')
+
         file_id = platform_id + '_' + datetime_i.strftime('%Y-%m-%d') + '_FP'   # ID used for daily plot functions
         log.info(f"{response['length']} features received.")
 
@@ -161,10 +161,13 @@ def run_example_fp(platform_id = 'PML_SR004',
 
 
 def run_example_3c(platform_id = 'PML_SR004',
-                   final_day = datetime.date.today() - datetime.timedelta(days=1),
-                   initial_day = datetime.date.today() - datetime.timedelta(days=1),
+                   final_day = datetime.datetime(2022,5,10,0,0,0),
+                   initial_day = datetime.datetime(2022,5,20,0,0,0),
                    target = '.', spectra = False):
-    """ 3c quality control, results plots, and data output (daily data binning) """
+    """
+    Download data from a specific So-Rad platform processed to Rrs using the 3C algorithm.
+    Apply quality control filters and plot results, save output in daily bins
+    """
 
     days = (final_day - initial_day).days + 1
 
@@ -268,12 +271,17 @@ def run_example_3c(platform_id = 'PML_SR004',
 def parse_args():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a','--algorithm', required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
-    parser.add_argument('-p','--platform', required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
-    parser.add_argument('-i','--initial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,21) - datetime.timedelta(days=1),help = "Initial day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-f','--final_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), default = datetime.date(2021,10,22), help = "Final day in format ['yyyy-mm-dd]'] ")
-    parser.add_argument('-t','--target', required = False, type = str, default='SoRad_testoutput', help = "Target folder for plots to be written to (defaults to current folder).")
-    parser.add_argument('-s','--spectra', required = False, type = bool, default = False, help = "Output Ls, Lt, Ed spectra")
+    parser.add_argument('-a','--algorithm',   required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
+    parser.add_argument('-p','--platform',    required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
+    parser.add_argument('-i','--initial_day', required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%dT%HH:%MM:%SS%z'),
+                                              default = datetime.datetime(2021,10,21,0,0,0),
+                                              help = "Initial date/time in iso format ['YYYY-mm-ddTHH:MM:SSz']")
+    parser.add_argument('-f','--final_day',   required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%dT%HH:%MM:%SS%z'),
+                                              default = datetime.datetime(2021,10,22,23,59,59),
+                                              help = "Final date/time in iso format ['YYYY-mm-ddTHH:MM:SSz']")
+    parser.add_argument('-t','--target',      required = False, type = str, default='./So-Rad_testoutput',
+                                              help = "Path to target folder for plots (defaults to 'So-Rad_testoutput' in the current folder).")
+    parser.add_argument('-s','--spectra',     required = False, action='store_true', help = "Output Ls, Lt, Ed spectra")
 
     args = parser.parse_args()
 
@@ -290,6 +298,6 @@ if __name__ == '__main__':
             os.mkdir(os.path.join(os.getcwd() + '/' + args.target))
 
     if args.algorithm.lower() == 'fp':
-        response = run_example_fp(args.platform, args.final_day, args.initial_day, args.target, args.spectra)
+        response = run_example_fp(args.platform, args.initial_day, args.final_day, args.target, args.spectra)
     elif args.algorithm.lower()  == '3c':
-        response = run_example_3c(args.platform, args.final_day, args.initial_day, args.target, args.spectra)
+        response = run_example_3c(args.platform, args.initial_day, args.final_day, args.target, args.spectra)
