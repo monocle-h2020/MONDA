@@ -1,5 +1,5 @@
 from . import WISP
-from . import So_Rad
+from . import sorad
 
 # import importlib
 # import pkgutil

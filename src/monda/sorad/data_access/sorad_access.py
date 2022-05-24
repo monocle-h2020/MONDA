@@ -22,19 +22,43 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'):
-    """Get features in json format and convert data into python friendly format"""
-    time_start = datetime.datetime.strftime(timewindow[0], '%Y-%m-%dT%H:%M:%SZ')
-    time_end   = datetime.datetime.strftime(timewindow[1], '%Y-%m-%dT%H:%M:%SZ')
+def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'):
+    """
+    Get features from geoserver layer, parse json response into python friendly format
+
+    : int count:        Number of features to retrieve per request. There is typically a request feature limit for each geoserver layer. This enables paging the response. (default 1000)
+    : str platform:     Optionally specify a sensor platform (default None)
+    : tuple timewindow: Specify a time window as a tuple of datetime or iso formatted strings. The default None will request data from the last 24h
+    : str layer:        Specify the geoserver layer. For a list of available layers see https://rsg.pml.ac.uk/geoserver/. (default rsg:sorad_public_view_fp_rrs)
+
+    """
+    if isinstance(timewindow, tuple):
+        if (isinstance(timewindow[0], str)) and (isinstance(timewindow[1], str)):
+            try:
+                time_start = datetime.datetime.strftime(timewindow[0], '%Y-%m-%dT%H:%M:%SZ')
+                time_end   = datetime.datetime.strftime(timewindow[1], '%Y-%m-%dT%H:%M:%SZ')
+            except:
+                log.error("timewindow should be a tuple of type datetime.datetime or iso-formatted string i.e. 'YYYY-mm-ddTHH:MM:SSZ'")
+                return None
+        elif (isinstance(timewindow[0], datetime.datetime)) and (isinstance(timewindow[1], datetime.datetime)):
+            time_start = timewindow[0]
+            time_end = timewindow[1]
+        else:
+            log.error("timewindow should be a tuple of type datetime.datetime or iso-formatted string i.e. 'YYYY-mm-ddTHH:MM:SSZ'")
+            return None
+    elif timewindow is None:
+        # default to the last 24H
+        time_start = datetime.datetime.now() - datetime.timedelta(days=1)
+        time_end = datetime.datetime.now()
 
     # build a CQL filter to get a time slice
     cql = ''
-    if timewindow is not None:
-        cql += f"time between {time_start} AND {time_end}"
+
+    cql += f"time between {time_start.isoformat()} AND {time_end.isoformat()}"
+
     if platform is not None:
         if len(cql)>0:
-            cql += " AND "
-        cql += f"""platform_id='{platform}'"""
+            cql += f" AND platform_id='{platform}'"
 
     # sanity-check the request count
     layer_limit = 10000  # geoserver layer is limited to 10,000 items per request
@@ -57,7 +81,9 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
 
     # prepare to page results by first getting number of hits on query, without returning features
     try:
-        resp = urllib.request.urlopen(wfs_url + "&resultType=hits").read()
+        hits_request = wfs_url + "&resultType=hits"
+        log.info(f"Pre-paging request: {hits_request}")
+        resp = urllib.request.urlopen(hits_request).read()
     except urllib.request.HTTPError as err:
         log.error(f"""WFS Server <a href="{url}">{url}</a> error""")
         log.exception(err)
@@ -68,13 +94,13 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
         hits = int(hitsdata.split('numberMatched="')[1].split('"')[0])
         log.info(f"{hits} features matched")
     else:
-        log.error(f"No features match the request")
+        log.error(f"No features match this request. The server response was {resp}")
         return None
 
     if count < hits:
         # the number of features matching the request exceeds the volume we have set to retreive in one go
         npages = int(np.ceil(hits/count))
-        log.info(f"Need to page the request: {npages} pages")
+        log.info(f"Paging the request: {npages} pages")
     else:
         npages = 1
 
@@ -143,13 +169,13 @@ def get_wl(res, spec_id):
     return wave
 
 
-def get_l1spectra(response, spec_id, wl):
+def get_l1spectra(response, spec_id, wl=np.arange(350, 951, 1)):
     """
     (Ir)radiance spectrum as a 2D matrix sampled on common wavelength grid
 
     response: response from WFS
     spec_id:  identifier
-    wl:       wavelength grid
+    wl:       output wavelength grid
 
     output:
     ndarray with rows timestamp index, columns wavelength
@@ -157,10 +183,9 @@ def get_l1spectra(response, spec_id, wl):
 
     spec_matrix = np.nan*np.ones([len(response['result']), len(wl)])
     i = 0
-    for res in response['result']:
+    for i, res in enumerate(response['result']):
         spec = res[spec_id + 'spectrum']
         spec_wl = np.array(get_wl(res, spec_id))
         spec_matrix[i,:] = np.interp(wl, spec_wl, spec)
-        i = i + 1
 
     return spec_matrix
