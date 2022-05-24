@@ -232,12 +232,12 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a','--algorithm',   required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
     parser.add_argument('-p','--platform',    required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
-    parser.add_argument('-i','--start_time',  required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%dT%HH:%MM:%SS%z'),
+    parser.add_argument('-i','--start_time',  required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
                                               default = datetime.datetime(2021,10,21,0,0,0),
-                                              help = "Initial date/time in iso format ['YYYY-mm-ddTHH:MM:SSz']")
-    parser.add_argument('-e','--end_time',    required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%dT%HH:%MM:%SS%z'),
+                                              help = "Initial UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
+    parser.add_argument('-e','--end_time',    required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
                                               default = datetime.datetime(2021,10,22,23,59,59),
-                                              help = "Final date/time in iso format ['YYYY-mm-ddTHH:MM:SSz']")
+                                              help = "Final UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
     parser.add_argument('-t','--target',      required = False, type = str, default=None,
                                               help = "Path to target folder for plots (defaults to 'So-Rad_testoutput' in the current folder).")
     parser.add_argument('-r','--output_radiance',  required = False, action='store_true', help = "Output Ls, Lt, Ed spectra to csv file")

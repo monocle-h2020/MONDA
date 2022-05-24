@@ -58,18 +58,12 @@ def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('$L_{t}$ [mW m$^{-2}$ sr$^{-1}$ nm$^{-1}$]')
 
-    if target != '.':
-        target_folder = os.path.join(os.getcwd() + '/' + target + '/')
-        plt.savefig(target_folder + file_id + '_irradiance.png', format='png', dpi=150)
-    elif target == '.':
-        plt.savefig(file_id + '_irradiancespectra.png', format='png', dpi=150)
-
-    #plt.close() # if doing a larger data download, then uncomment plt.close()
+    plt.savefig(os.path.join(target, file_id + '_irradiance-spectra.png'), format='png', dpi=150)
 
     return
 
 
-def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target): 
+def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
     """ rrs plot function showing sequential quality control filters"""
 
     if np.sum(q_3) > 0:
@@ -80,48 +74,42 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         ymax = np.ceil(np.nanmax(rrs.T[:,q_2==1]*1000))/1000;
 
         plt.subplot(2, 2, 1)
-        plt.title('No QC:  n = ' + str(int(len(q_1))))
+        plt.title(f"No QC (n = {int(len(q_1))}")
         plt.plot(wl, rrs.T, linewidth=0.4, alpha=0.6)
-        plt.xlim(350, 900)
+        plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$ [sr$^{-1}$]')
 
         plt.subplot(2, 2, 2)
-        plt.title('Rad. QC:  n = ' + str(int(np.sum(q_1))))
+        plt.title(f"Rad. QC (n = {int(np.sum(q_1))}")
         plt.plot(wl, rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
-        plt.xlim(350, 900)
+        plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
 
         plt.subplot(2, 2, 3)
-        plt.title('Rad. + 3C QC:  n = ' + str(int(np.sum(q_2))))
+        plt.title(f"Rad. + 3C QC (n = {int(np.sum(q_2))}")
         plt.plot(wl,rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
-        plt.xlim(350, 900)
+        plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
 
         plt.subplot(2, 2, 4)
-        plt.title('Rad. + 3C + Rrs QC:  n = ' + str(int(np.sum(q_3))))
+        plt.title(f"Rad. + 3C + Rrs QC (n = {int(np.sum(q_3))}")
         plt.plot(wl,rrs.T[:,q_3==1], linewidth=0.4, alpha=0.8)
-        plt.xlim(350, 900)
-        plt.ylim(-0.002, ymax) # force axis limits 
-        plt.grid()
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
 
         plt.subplots_adjust(hspace=0.5)
 
-        if target != '.':
-            target_folder = os.path.join(os.getcwd() + '/' + target + '/')
-            plt.savefig(target_folder + file_id +  '_qc.png', format='png', dpi=150)
-        elif target == '.':
-            plt.savefig(file_id + '_qc.png', format='png', dpi=150)
-
-      #  plt.close()
+        plt.savefig(os.path.join(target, file_id + '_qc.png'), format='png', dpi=150)
 
     return
 
@@ -137,39 +125,33 @@ def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
         ymax = np.ceil(np.nanmax(rrs.T[:,q_2==1]*1000))/1000;
 
         plt.subplot(2, 2, 1)
-        plt.title('No QC: n = ' + str(int(len(q_1))))
+        plt.title(f"No QC: n = {int(len(q_1))}")
         plt.plot(wl, rrs.T, linewidth=0.4, alpha=0.6)
-        plt.xlim(350, 900)
+        plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$ [sr$^{-1}$]')
 
         plt.subplot(2, 2, 2)
-        plt.title('Rad QC: n = ' + str(int(np.sum(q_1))))
+        plt.title(f"Rad QC: n = {int(np.sum(q_1))}")
         plt.plot(wl, rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
-        plt.xlim(350, 900)
+        plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
 
         plt.subplot(2, 2, 3)
-        plt.title('Rad + Rrs QC: % valid ' + str(int(np.sum(q_2))))
+        plt.title(f"Rad + Rrs QC: n = {int(np.sum(q_2))}")
         plt.plot(wl, rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
-        plt.xlim(350, 900)
+        plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
 
         plt.subplots_adjust(hspace=0.5)
 
-        if target != '.':
-            target_folder = os.path.join(os.getcwd() + '/' + target + '/')
-            plt.savefig(target_folder + file_id +  '_qc.png', format='png', dpi=150)
-        elif target == '.':
-            plt.savefig(file_id + '_qc.png', format='png', dpi=150)
-
-       # plt.close()
+        plt.savefig(os.path.join(target, file_id + '_qc.png'), format='png', dpi=150)
 
     return
 
@@ -206,13 +188,7 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=11):
         plt.title(str(file_id))
         plt.legend()
 
-        if target != '.':
-            target_folder = os.path.join(os.getcwd() + '/' + target + '/')
-            plt.savefig(target_folder + file_id + '_coveragemap.png', format='png', dpi=150)
-        elif target == '.':
-            plt.savefig(file_id + '_coveragemap.png', format='png', dpi=150)
-
-       # plt.close()
+        plt.savefig(os.path.join(target, file_id + '_coveragemap.png'), format='png', dpi=150)
 
     return
 
@@ -235,7 +211,7 @@ def plot_results(ed ,ls, rrs, time, wl, q, file_id, target):
         plt.subplot(2, 1, 1)
         plt.suptitle(str(file_id))
 
-        plt.title('Sky conditions: $\pi L_{s}(400)/E_{d}$(400) = ' + str(np.round(np.mean(np.pi*ls_ed_400),3)) + ' +/- '  + str(np.round(np.std(np.pi*ls_ed_400), 3)))
+        plt.title(f"Sky conditions: $\pi L_{s}(400)/E_{d}$(400) = {np.round(np.mean(np.pi*ls_ed_400),3)} +/- {np.round(np.std(np.pi*ls_ed_400), 3)}")
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H'))
         plt.ylabel('Degree of cloudiness: \n $\pi L_{s}(400)/E_{d}$(400)')
         plt.plot_date(timestamp,np.pi*ls_ed_400,color='gray',ms=1,label = 'Failed QC')
@@ -263,12 +239,6 @@ def plot_results(ed ,ls, rrs, time, wl, q, file_id, target):
         plt.ylabel('$R_{rs}$  [sr$^{-1}$]')
         plt.legend()
 
-        if target != '.':
-            target_folder = os.path.join(os.getcwd() + '/' + target + '/')
-            plt.savefig(target_folder + file_id + '_results.png', format='png', dpi=150)
-        elif target == '.':
-            plt.savefig(file_id + '_results.png', format='png', dpi=150)
-
-      #  plt.close()
+        plt.savefig(os.path.join(target, file_id + '_results.png'), format='png', dpi=150)
 
     return
