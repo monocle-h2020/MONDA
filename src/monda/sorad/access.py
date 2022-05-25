@@ -169,7 +169,7 @@ def get_wl(res, spec_id):
     return wave
 
 
-def get_l1spectra(response, spec_id, wl=np.arange(350, 951, 1)):
+def get_l1spectra(response, spec_id, wl_out=np.arange(350, 951, 1)):
     """
     (Ir)radiance spectrum as a 2D matrix sampled on common wavelength grid
 
@@ -181,11 +181,11 @@ def get_l1spectra(response, spec_id, wl=np.arange(350, 951, 1)):
     ndarray with rows timestamp index, columns wavelength
     """
 
-    spec_matrix = np.nan*np.ones([len(response['result']), len(wl)])
+    spec_matrix = np.nan*np.ones([len(response['result']), len(wl_out)])
     i = 0
     for i, res in enumerate(response['result']):
         spec = res[spec_id + 'spectrum']
-        spec_wl = np.array(get_wl(res, spec_id))
-        spec_matrix[i,:] = np.interp(wl, spec_wl, spec)
+        spec_wl = np.array(get_wl(res, spec_id))  # get the wavelength grid for this particular spectrum
+        spec_matrix[i,:] = np.interp(wl_out, spec_wl, spec)  # interpolate to common wavelength grid
 
     return spec_matrix

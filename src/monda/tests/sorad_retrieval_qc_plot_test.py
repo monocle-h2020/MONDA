@@ -77,6 +77,8 @@ def run_example(platform_id = 'PML_SR004',
     rrsalgorithm Fingerprint (fp) or 3c Rrs processing algorithm
     """
 
+    wl_output = np.arange(300, 1001, 1)  # output range to interpolate (ir)radiance spectra. Note that Rrs is already interpolated to 1-nm over the available sensor range.
+
     if rrsalgorithm == 'fp':
         layer = 'rsg:sorad_public_view_fp_full'
     elif rrsalgorithm == '3c':
@@ -110,28 +112,32 @@ def run_example(platform_id = 'PML_SR004',
                                   layer=layer)
 
 
-        file_id = platform_id + '_' + datetime_i.strftime('%Y-%m-%d') + '_FP'   # ID used to write output files
         log.info(f"{response['length']} features received.")
 
         if response['length'] == 0:
             continue
 
-        wl, time, lat, lon, rel_view_az, ed, ls, lt, rrs = unpack_response(response, rrsalgorithm)
+        file_id = f"{datetime_i.strftime('%Y-%m-%d')}_{rrsalgorithm.upper()}"   # labelling for output data files and plots
+
+        rrswl, time, lat, lon, rel_view_az,\
+               ed, ls, lt, rrs,\
+               sample_uuids, platform_ids, platform_uuids,\
+               gps_speeds, tilt_avgs, tilt_stds = unpack_response(response, rrsalgorithm, wl_output)
 
         if output_plots:
-            plots.plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target)
+            plots.plot_ed_ls_lt(ed, ls, lt, time, wl_output, file_id, target)
 
 
         # Step (i) radiometric quality control filters (i.e. QC applied to l or e spectra)
-        q_lt_ed = qc.qc_lt_ed_filter(ed, lt, time, wl, threshold = 0.020) # lt/Ed ratio (glint) filtering
+        q_lt_ed = qc.qc_lt_ed_filter(ed, lt, time, wl_output, threshold = 0.020) # lt/Ed ratio (glint) filtering
         q_ed =    qc.qc_ed_filter(ed, min_ed_threshold = 500) # filters on ed and ls anomalies
-        q_ls =    qc.qc_ls_filter(ls, wl, threshold = 1)
+        q_ls =    qc.qc_ls_filter(ls, wl_output, threshold = 1)
         q_rad =   qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls) # combined `radiometric' qc mask
 
         # Step (ii)  addtional qc metrics that apply to Rrs spectrum
-        q_ss =        qc.qc_SS_NIR_filter(wl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum
+        q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum
         q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
-        q_min =       qc.qc_rrs_min(rrs, wl)
+        q_min =       qc.qc_rrs_min(rrs, rrswl)
 
         # (3c) algorithmic qc filters specfic to 3C (rmsd or termination at rho bounds)
         if rrsalgorithm == '3c':
@@ -153,20 +159,26 @@ def run_example(platform_id = 'PML_SR004',
         # q_var = qc_radiometric_variability(ed, lt, ls, time, wl, windowlength = 60, var_threshold =1.1, var_metric = 'zscore_max')
 
         if output_plots and rrsalgorithm == 'fp':
-            plots.plot_rrs_qc_fp(rrs, time, wl, q_rad, q_rad_rrs,              file_id, target)
+            plots.plot_rrs_qc_fp(rrs, time, rrswl, q_rad, q_rad_rrs,              file_id, target)
             plots.plot_coveragemap(lat, lon, q_rad, file_id, target, map_resolution = 11)
-            plots.plot_results(ed, ls, rrs, time, wl, q_rad_rrs, file_id, target)
+            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
 
         elif output_plots and rrsalgorithm == '3c':
-            plots.plot_rrs_qc_3c(rrs, time, wl, q_rad, q_rad_3c, q_rad_3c_rrs, file_id, target)
+            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_rad, q_rad_3c, q_rad_3c_rrs, file_id, target)
             plots.plot_coveragemap(lat, lon, q_rad_3c, file_id, target, map_resolution = 11)
-            plots.plot_results(ed, ls, rrs, time, wl, q_rad_rrs, file_id, target)
+            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
 
 
-        d = pd.DataFrame()   # store core metadata and qc flags in a data frame
+        d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
+        d['sample_uuid'] = sample_uuids
+        d['platform_id'] = platform_ids
+        d['platform_uuid'] = platform_uuids
         d['timestamp'] = time
         d['lat'] = lat
         d['lon'] = lon
+        d['gps_speed'] = gps_speeds
+        d['tilt_avg'] = tilt_avgs
+        d['tilt_std'] = tilt_stds
         d['rel_view_az '] = rel_view_az
         d['q_1'] = q_rad     # Mask after step (i) QC
         d['q_2'] = q_rad_rrs # Mask after step (ii) QC. Currently recommended for FP rrs data analysis
@@ -184,47 +196,65 @@ def run_example(platform_id = 'PML_SR004',
         # Store outputs
         if output_metadata:
             d_filename = os.path.join(target, file_id + '_metadata.csv')
+            if os.path.exists(d_filename):
+                log.warning(f"File {d_filename} will be overwritten")
             d.to_csv(d_filename)
 
         if output_rrs:
             r_filename = os.path.join(target, file_id + '_Rrs.csv')
-            np.savetxt(r_filename, rrs, delimiter=',',  header = str(list(wl))[1:-1], fmt='%.8f')
+            if os.path.exists(r_filename):
+                log.warning(f"File {r_filename} will be overwritten")
+            np.savetxt(r_filename, rrs, delimiter=',',  header = ",".join([str(w) for w in rrswl]), fmt='%.8f')
 
         if output_radiance:
-            ls_filename = os.path.join(target, file_id + '_ls.csv')
-            np.savetxt(ls_filename, ls, delimiter=',', header = str(list(wl))[1:-1], fmt='%.8f')
-            lt_filename = os.path.join(target, file_id + '_lt.csv')
-            np.savetxt(lt_filename, lt, delimiter=',', header = str(list(wl))[1:-1], fmt='%.8f')
-            ed_filename = os.path.join(target, file_id + '_ed.csv')
-            np.savetxt(ed_filename, ed, delimiter=',', header = str(list(wl))[1:-1], fmt='%.8f')
+            header = ",".join([str(w) for w in wl_output])
+            ls_filename = os.path.join(target, file_id + '_Ls.csv')
+            lt_filename = os.path.join(target, file_id + '_Lt.csv')
+            ed_filename = os.path.join(target, file_id + '_Ed.csv')
+            if os.path.exists(ls_filename):
+                log.warning(f"File {ls_filename} will be overwritten")
+            if os.path.exists(lt_filename):
+                log.warning(f"File {lt_filename} will be overwritten")
+            if os.path.exists(ed_filename):
+                log.warning(f"File {ed_filename} will be overwritten")
+            np.savetxt(ls_filename, ls, delimiter=',', header = header, fmt='%.8f')
+            np.savetxt(lt_filename, lt, delimiter=',', header = header, fmt='%.8f')
+            np.savetxt(ed_filename, ed, delimiter=',', header = header, fmt='%.8f')
 
     return response
 
 
-def unpack_response(response, rrsalgorithm):
+def unpack_response(response, rrsalgorithm, wl_out):
 
-    time = [response['result'][i]['time'] for i in range(len(response['result']))]
-    lat = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
-    lon = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
-    rel_view_az = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    #log.info(response['result'][0].keys())   # show all available fields
+
+    time          = [response['result'][i]['time'] for i in range(len(response['result']))]
+    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
+    platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
+    platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
+    gps_speed     = np.array([response['result'][i]['id'] for i in range(len(response['result']))])
+    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+
+    ed = access.get_l1spectra(response, 'ed_', wl_out) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
+    ls = access.get_l1spectra(response, 'ls_', wl_out)
+    lt = access.get_l1spectra(response, 'lt_', wl_out)
+
 
     if rrsalgorithm == '3c':
-        wl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # core metadata
-        ed = access.get_l1spectra(response, 'ed_', wl) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
-        ls = access.get_l1spectra(response, 'ls_', wl)
-        lt = access.get_l1spectra(response, 'lt_', wl)
+        rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
         rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
 
     elif rrsalgorithm == 'fp':
-        wl = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
-        ed = access.get_l1spectra(response, 'ed_', wl) # irradiance spectra in 2D matrix format, where rows=time index, columns=wavelength
-        ls = access.get_l1spectra(response, 'ls_', wl)
-        lt = access.get_l1spectra(response, 'lt_', wl)
-        rrs = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))]) # rrs spectra 2D matrix format: rows time index, columns wavelength
+        rrswl  = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
+        rrs_    = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))])  # rrs spectra 2D matrix format: rows time index, columns wavelength
         offset = np.array([response['result'][i]['nir_offset'] for i in range(len(response['result']))])
-        rrs  =  np.array([rrs[i,:] - np.ones(len(wl))*offset[i] for i in range(len(rrs))]) # spectral offset (applied as default definition of FP rrs)
+        rrs = np.array([rrs_[i,:] - np.ones(len(rrswl))*offset[i] for i in range(len(rrs_))]) # spectral offset (applied as default definition of FP rrs)
 
-    return wl, time, lat, lon, rel_view_az, ed, ls, lt, rrs
+    return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
 
 
 def parse_args():
