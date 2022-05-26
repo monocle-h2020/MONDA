@@ -15,15 +15,15 @@ The Rrs spectra are available from two separate algorithms:
 
 The FP and 3C outputs have different structures, quality control chains and plot functions: use the -a argument to specify which should be used.
 
-For command line options please use
+For command line options please see
     python sorad_retrieval_qc_plot_test.py -h
 
 
 For example,
-    python sorad_retrieval_qc_plot_test.py -a 3c -p PML_SR004 -i "2021-08-16 00:00:00" -e "2021-08-22 23:59:59" -r -m -c -g
-
+    python sorad_retrieval_qc_plot_test.py -a 3c -p PML_SR004 -i "2021-08-16 00:00:00" -e "2021-08-22 23:59:59" -r -m -c -g --bbox 35 -10 40 -8
 will plot and save all results from So-Rad platform PML_SR004 for the given time period, with Rrs derived from the 3C algorithm.
 Files will be written to a default folder in the current directory (override this by providing an alternative path with the -t argument).
+An optional bounding box is specified providing four space-separated coordinates (corner 1 lat lon corner 2 lat lon).
 
 -------------------------------------------------------------------------------
 
@@ -66,6 +66,7 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 def run_example(platform_id = 'PML_SR004',
                 start_time = datetime.datetime(2021,10,21,0,0,0),
                 end_time   = datetime.datetime(2021,10,22,23,59,59),
+                bbox = None,
                 target='.', rrsalgorithm='fp',
                 output_radiance = False,
                 output_metadata = False,
@@ -79,6 +80,7 @@ def run_example(platform_id = 'PML_SR004',
     platform_id: the serial number of a So-Rad platform, or None
     start_time:  date/time to start collecting data from
     end_time:    date/time to start collecting data from
+    bbox:        Bounding box corner coordinates (lat,lon,lat,lon)
     target:      destination folder for plots/data
     rrsalgorithm Fingerprint (fp) or 3c Rrs processing algorithm
     """
@@ -103,7 +105,7 @@ def run_example(platform_id = 'PML_SR004',
     for i in range(days):
         this_day      = initial_day + datetime.timedelta(days = i)
         datetime_i    = datetime.datetime(this_day.year, this_day.month, this_day.day, 0, 0, 0)
-        datetime_e    = datetime.datetime(this_day.year, this_day.month, this_day.day, 23, 59, 59, 999)
+        datetime_e    = datetime.datetime(this_day.year, this_day.month, this_day.day, 23, 59, 59, 999999)
 
         if datetime_i < start_time:
             datetime_i = start_time
@@ -114,7 +116,7 @@ def run_example(platform_id = 'PML_SR004',
 
         response = access.get_wfs(platform = platform_id,
                                   timewindow = (datetime_i, datetime_e),
-                                  layer=layer)
+                                  layer=layer, bbox=bbox)
 
 
         log.info(f"{response['length']} features received.")
@@ -206,13 +208,13 @@ def run_example(platform_id = 'PML_SR004',
         if output_metadata:
             d_filename = os.path.join(target, file_id + '_metadata.csv')
             if os.path.exists(d_filename):
-                log.warning(f"File {d_filename} will be overwritten")
+                log.warning(f"File {d_filename} was overwritten")
             d.to_csv(d_filename)
 
         if output_rrs:
             r_filename = os.path.join(target, file_id + '_Rrs.csv')
             if os.path.exists(r_filename):
-                log.warning(f"File {r_filename} will be overwritten")
+                log.warning(f"File {r_filename} was overwritten")
             np.savetxt(r_filename, rrs, delimiter=',',  header = ",".join([str(w) for w in rrswl]), fmt='%.8f')
 
         if output_radiance:
@@ -221,11 +223,11 @@ def run_example(platform_id = 'PML_SR004',
             lt_filename = os.path.join(target, file_id + '_Lt.csv')
             ed_filename = os.path.join(target, file_id + '_Ed.csv')
             if os.path.exists(ls_filename):
-                log.warning(f"File {ls_filename} will be overwritten")
+                log.warning(f"File {ls_filename} was overwritten")
             if os.path.exists(lt_filename):
-                log.warning(f"File {lt_filename} will be overwritten")
+                log.warning(f"File {lt_filename} was overwritten")
             if os.path.exists(ed_filename):
-                log.warning(f"File {ed_filename} will be overwritten")
+                log.warning(f"File {ed_filename} was overwritten")
             np.savetxt(ls_filename, ls, delimiter=',', header = header, fmt='%.8f')
             np.savetxt(lt_filename, lt, delimiter=',', header = header, fmt='%.8f')
             np.savetxt(ed_filename, ed, delimiter=',', header = header, fmt='%.8f')
@@ -279,6 +281,7 @@ def parse_args():
     parser.add_argument('-e','--end_time',    required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
                                               default = datetime.datetime(2021,10,22,23,59,59),
                                               help = "Final UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
+    parser.add_argument('-b','--bbox',        required = False, type = float, nargs='+', default = None, help = "Restrict query to bounding box format [corner1lat corner1lon corner2lat corner2lon]")
     parser.add_argument('-t','--target',      required = False, type = str, default=None,
                                               help = "Path to target folder for plots (defaults to 'So-Rad_testoutput' in the current folder).")
     parser.add_argument('-r','--output_radiance',  required = False, action='store_true', help = "Output Ls, Lt, Ed spectra to csv file")
@@ -304,5 +307,5 @@ if __name__ == '__main__':
     if not os.path.isdir(args.target):
         os.mkdir(args.target)
 
-    response = run_example(args.platform, args.start_time, args.end_time, args.target, args.algorithm.lower(),
+    response = run_example(args.platform, args.start_time, args.end_time, args.bbox, args.target, args.algorithm.lower(),
                            args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots)

@@ -111,7 +111,7 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         ymax = np.ceil(np.nanmax(rrs.T[:,q_2==1]*1000))/1000;
 
         plt.subplot(2, 2, 1)
-        plt.title(f"No QC (n = {int(len(q_1))}")
+        plt.title(f"No QC (n = {int(len(q_1))})")
         plt.plot(wl, rrs.T, linewidth=0.4, alpha=0.6)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
@@ -120,7 +120,7 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         plt.ylabel('$R_{rs}$ [sr$^{-1}$]')
 
         plt.subplot(2, 2, 2)
-        plt.title(f"Rad. QC (n = {int(np.sum(q_1))}")
+        plt.title(f"Rad. QC (n = {int(np.sum(q_1))})")
         plt.plot(wl, rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
@@ -128,7 +128,7 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         plt.xlabel('Wavelength [nm]')
 
         plt.subplot(2, 2, 3)
-        plt.title(f"Rad. + 3C QC (n = {int(np.sum(q_2))}")
+        plt.title(f"Rad. + 3C QC (n = {int(np.sum(q_2))})")
         plt.plot(wl,rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
@@ -137,7 +137,7 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
 
         plt.subplot(2, 2, 4)
-        plt.title(f"Rad. + 3C + Rrs QC (n = {int(np.sum(q_3))}")
+        plt.title(f"Rad. + 3C + Rrs QC (n = {int(np.sum(q_3))})")
         plt.plot(wl,rrs.T[:,q_3==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
@@ -162,7 +162,7 @@ def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
         ymax = np.ceil(np.nanmax(rrs.T[:,q_2==1]*1000))/1000;
 
         plt.subplot(2, 2, 1)
-        plt.title(f"No QC: n = {int(len(q_1))}")
+        plt.title(f"No QC (n = {int(len(q_1))})")
         plt.plot(wl, rrs.T, linewidth=0.4, alpha=0.6)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
@@ -171,7 +171,7 @@ def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
         plt.ylabel('$R_{rs}$ [sr$^{-1}$]')
 
         plt.subplot(2, 2, 2)
-        plt.title(f"Rad QC: n = {int(np.sum(q_1))}")
+        plt.title(f"Rad QC (n = {int(np.sum(q_1))})")
         plt.plot(wl, rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
@@ -179,7 +179,7 @@ def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
         plt.xlabel('Wavelength [nm]')
 
         plt.subplot(2, 2, 3)
-        plt.title(f"Rad + Rrs QC: n = {int(np.sum(q_2))}")
+        plt.title(f"Rad + Rrs QC (n = {int(np.sum(q_2))})")
         plt.plot(wl, rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits

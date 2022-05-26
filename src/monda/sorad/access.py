@@ -22,7 +22,7 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'):
+def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs', bbox=None):
     """
     Get features from geoserver layer, parse json response into python friendly format
 
@@ -59,6 +59,13 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
     if platform is not None:
         if len(cql)>0:
             cql += f" AND platform_id='{platform}'"
+
+    if bbox is not None:
+        if not len(bbox) == 4:
+           log.error("Bounding box expects a tuple of four values (two corner coordinate pairs)")
+        if len(cql)>0:
+            cql += " AND "
+        cql += f"""BBOX(location, {",".join([str(b) for b in bbox])})"""
 
     # sanity-check the request count
     layer_limit = 10000  # geoserver layer is limited to 10,000 items per request
