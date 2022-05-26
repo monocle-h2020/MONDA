@@ -2,8 +2,17 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 import numpy as np
 
-# from data_access.DataAccessAPI import WISP_data_API_call
-import monda
+from monda.WISP import access
+
+import sys
+import logging
+
+log = logging.getLogger('WISP-access')
+myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
+formatter = logging.Formatter(myFormat)
+logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
+
+
 
 def list_to_array(lstring):
    try:
@@ -12,15 +21,21 @@ def list_to_array(lstring):
    except:
         return None
 
-def plot_reflectance_station(instrument, day, start, stop):
+def plot_reflectance_station(instrument, day, start, stop, output_rrs):
     ''' Plot reflectance spectra for one WISPstation for one day
         Retrieve data from WISPcloud API
     '''
     style.use('seaborn-whitegrid')
     REQUEST = 'REQUEST=GetData&INSTRUMENT={}&include=measurement.date,measurement.id,level2.reflectance,site.name,level2.quality&TIME={}T{},{}T{}'.format(
         instrument, day, start, day, stop)
-    l2r = monda.WISP.data_access.WISP_data_API_call(REQUEST)
+
+    l2r = access.WISP_data_API_call(REQUEST, output_rrs)
     rows = len(l2r)
+    log.info(f"{rows} records retrieved")
+
+    if rows == 0:
+        return None
+
     color = iter(plt.cm.viridis(np.linspace(0, 1, rows)))
     wl = np.array(list(range(350, 901, 1)))
     fig = plt.figure(figsize=(8, 6))
@@ -37,18 +52,25 @@ def plot_reflectance_station(instrument, day, start, stop):
     plt.legend(loc='upper left', prop={'size': 8}, bbox_to_anchor=(1, 1))
     plt.title('{} at {} on {}'.format(instrument, station, day))
     plt.tight_layout(pad=7)
+
     return fig
 
 
-def plot_radiances_station(instrument, day, start, stop):
+def plot_radiances_station(instrument, day, start, stop, output_rad):
     ''' Plot (ir)radiance spectra for one WISPstation for one day
         Retrieve data from WISPcloud API
     '''
     style.use('seaborn-whitegrid')
     REQUEST = 'REQUEST=GetData&INSTRUMENT={}&include=measurement.date,measurement.id,site.name,ed.irradiance,ld.radiance,lu.radiance,level2.quality&TIME={}T{},{}T{}'.format(
         instrument, day, start, day, stop)
-    l1b = monda.WISP.data_access.WISP_data_API_call(REQUEST)
+
+    l1b = access.WISP_data_API_call(REQUEST, output_rad)
     rows = len(l1b)
+    log.info(f"{rows} records retrieved")
+
+    if rows == 0:
+        return None
+
     color = iter(plt.cm.Set2(np.linspace(0, 1, rows)))
     wl = np.array(list(range(350, 901, 1)))
     fig = plt.figure(figsize=(10, 8))
