@@ -1,6 +1,14 @@
 import requests
+import sys
 import io
 import csv
+import logging
+
+log = logging.getLogger('WISP-access')
+myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
+formatter = logging.Formatter(myFormat)
+logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
+
 
 def WISP_data_API_call(request_string, output_file=None):
     """ parse the request string to the cuurent WISP data service and optionally save output to file.
@@ -14,12 +22,13 @@ def WISP_data_API_call(request_string, output_file=None):
     password = 'WISPstation'
     Data_service = 'https://wispcloud.waterinsight.nl/api/query?SERVICE=Data&VERSION=1.0'
     url_string = f'{Data_service}&{request_string}'
-    print(url_string)
-    if output_file:
+    log.info(f"Request URL = {url_string}")
+
+    if output_file is not None:
         datastring = io.StringIO(requests.get(url_string, auth=(username, password)).content.decode('utf-8'))
         print(datastring.read(), file=open(output_file, 'w'))
-    else:
-        print('confirming that no filename was provided to write output into')
+
     datastring = io.StringIO(requests.get(url_string, auth=(username, password)).content.decode('utf-8'))
     data = list(csv.DictReader(filter(lambda row: row[0] != '#', datastring), delimiter='\t'))
+
     return data

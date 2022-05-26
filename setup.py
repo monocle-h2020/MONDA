@@ -6,10 +6,10 @@ with open("README.md", "r") as long_info:
 
 setup(
     name='monda',
-    version='0.0.1',
+    version='0.0.2',
     author='',
     author_email='',
-    description='A package for the retrieval, QC and analysis of Data from MONOCLE systems',
+    description='A package for retrieval, quality control and analysis of Data from MONOCLE systems',
     url='https://github.com/monocle-h2020/MONDA',
     py_modules=["monda"],
     package_dir={'':'src'},

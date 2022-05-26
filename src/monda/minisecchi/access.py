@@ -1,11 +1,8 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-Monda access functions to retrieve So-Rad data from PML Geoserver using WFS standard.
+Monda access functions to retrieve Mini-Secchi disk from PML Geoserver using WFS standard.
 ------------------------------------------------------------------------------
-Tom Jordan - tjor@pml.ac.uk - Feb 2022
 Stefan Simis - stsi@pml.ac.uk - Feb 2022
-
 """
 
 import logging
@@ -16,13 +13,13 @@ import json
 import urllib.request
 import urllib.parse
 
-log = logging.getLogger('sorad-downloader')
+log = logging.getLogger('secchi-downloader')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
 formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_view_fp_rrs'):
+def get_wfs(count=100, platform=None, timewindow=None, bbox=None, layer='rsg:minisecchi_public_view'):
     """Get features in json format and convert data into python friendly format"""
     time_start = datetime.datetime.strftime(timewindow[0], '%Y-%m-%dT%H:%M:%SZ')
     time_end   = datetime.datetime.strftime(timewindow[1], '%Y-%m-%dT%H:%M:%SZ')
@@ -35,6 +32,13 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
         if len(cql)>0:
             cql += " AND "
         cql += f"""platform_id='{platform}'"""
+
+    if bbox is not None:
+        if not len(bbox) == 4:
+           log.error("Bounding box expects a tuple of four values (two corner coordinate pairs)")
+        if len(cql)>0:
+            cql += " AND "
+        cql += f"""BBOX(location, {",".join([str(b) for b in bbox])})"""
 
     # sanity-check the request count
     layer_limit = 10000  # geoserver layer is limited to 10,000 items per request
@@ -57,13 +61,16 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
 
     # prepare to page results by first getting number of hits on query, without returning features
     try:
-        resp = urllib.request.urlopen(wfs_url + "&resultType=hits").read()
+        hits_request = wfs_url + "&resultType=hits"
+        log.info(f"Pre-paging request: {hits_request}")
+        resp = urllib.request.urlopen(hits_request).read()
     except urllib.request.HTTPError as err:
         log.error(f"""WFS Server <a href="{url}">{url}</a> error""")
         log.exception(err)
         return None
 
     hitsdata = str(resp)
+    log.debug(hitsdata)
     if 'numberMatched' in hitsdata:
         hits = int(hitsdata.split('numberMatched="')[1].split('"')[0])
         log.info(f"{hits} features matched")
@@ -125,42 +132,3 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:sorad_public_v
         paged_result = paged_result + features
 
     return {'result':paged_result, 'length':len(paged_result)}
-
-
-def get_wl(res, spec_id):
-    """Reconstruct wavelength grid from information from most recent calibration records (only for L1 (ir)radiance spectra)"""
-
-    nbands = len(res[spec_id + 'spectrum'])
-    wave = [0.0] * nbands
-    c0s = res[spec_id + 'wl'][0]
-    c1s = res[spec_id + 'wl'][1]
-    c2s = res[spec_id + 'wl'][2]
-    c3s = res[spec_id + 'wl'][3]
-    for i in range(1, len(wave)+1, 1):
-        wave[i-1] = (c0s) + (c1s*(i+1)) +\
-            (c2s*(i+1)**2) + (c3s*(i+1)**3)
-
-    return wave
-
-
-def get_l1spectra(response, spec_id, wl):
-    """
-    (Ir)radiance spectrum as a 2D matrix sampled on common wavelength grid
-
-    response: response from WFS
-    spec_id:  identifier
-    wl:       wavelength grid
-
-    output:
-    ndarray with rows timestamp index, columns wavelength
-    """
-
-    spec_matrix = np.nan*np.ones([len(response['result']), len(wl)])
-    i = 0
-    for res in response['result']:
-        spec = res[spec_id + 'spectrum']
-        spec_wl = np.array(get_wl(res, spec_id))
-        spec_matrix[i,:] = np.interp(wl, spec_wl, spec)
-        i = i + 1
-
-    return spec_matrix
