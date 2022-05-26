@@ -19,7 +19,7 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:minisecchi_public_view'):
+def get_wfs(count=100, platform=None, timewindow=None, bbox=None, layer='rsg:minisecchi_public_view'):
     """Get features in json format and convert data into python friendly format"""
     time_start = datetime.datetime.strftime(timewindow[0], '%Y-%m-%dT%H:%M:%SZ')
     time_end   = datetime.datetime.strftime(timewindow[1], '%Y-%m-%dT%H:%M:%SZ')
@@ -32,6 +32,13 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:minisecchi_pub
         if len(cql)>0:
             cql += " AND "
         cql += f"""platform_id='{platform}'"""
+
+    if bbox is not None:
+        if not len(bbox) == 4:
+           log.error("Bounding box expects a tuple of four values (two corner coordinate pairs)")
+        if len(cql)>0:
+            cql += " AND "
+        cql += f"""BBOX(location, {",".join([str(b) for b in bbox])})"""
 
     # sanity-check the request count
     layer_limit = 10000  # geoserver layer is limited to 10,000 items per request
@@ -54,7 +61,9 @@ def get_wfs(count=100, platform=None, timewindow=None, layer='rsg:minisecchi_pub
 
     # prepare to page results by first getting number of hits on query, without returning features
     try:
-        resp = urllib.request.urlopen(wfs_url + "&resultType=hits").read()
+        hits_request = wfs_url + "&resultType=hits"
+        log.info(f"Pre-paging request: {hits_request}")
+        resp = urllib.request.urlopen(hits_request).read()
     except urllib.request.HTTPError as err:
         log.error(f"""WFS Server <a href="{url}">{url}</a> error""")
         log.exception(err)
