@@ -40,12 +40,12 @@ https://github.com/monocle-h2020/MONDA.git
 ```
 
 ## Citation
-If you use MONDA in a scientific publication, we would appreciate citations.  
+If you use MONDA in a scientific publication, we would appreciate citations.
 
-To cite the package as a whole you can use:  
+To cite the package as a whole you can use:
 Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA 
 
-For single submodules (such as WISP or sorad) please use:  
+For single submodules (such as WISP or sorad) please use:
 [submodule] In Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA
 
 ## Contributors
@@ -55,7 +55,7 @@ Water Insight (Semhar-Ghe@github, waterthing@github).
 ## Submodule Information
 The package contains access, quality control and visualisation tools for a number of sensor systems, for which details are provided below.
 
-### WISP (station)
+## WISP (station)
 The WISPstation is a fixed position optical instrument used for measuring water-leaving reflectance.
 It records radiance and irradiance with an extended wavelength range of 350nm to 1100nm in two viewing directions,
 which enables continuous and autonomous high-quality measurements for water quality monitoring and satellite validation. 
@@ -88,7 +88,7 @@ Please use the instrument identification serial number and date when searching f
 An example script is provided to connect with the WISPcloud API and subsequently plot Rrs and (ir)radiance measurements using date and instrument serial number as input arguments. 
 
 
-### So-Rad
+## So-Rad
 The So-Rad is a low-power, low cost autonomous platform to obtain high-frequency water-leaving reflectance from 
 non-stationary platforms such as ships and buoys. So-Rad software is highly configurable and open-source. 
 So-Rad optimizes the measurement geometry of commercially available sensors which increases the number of successful 
@@ -111,4 +111,6 @@ easily carried out by non-expert crew.
 autonomous operation.
 
 #### Functionality of the submodule
-The scripts provided demonstrate how to download paged data from the So-Rad Geoserver layers hosted at PML. These layers offer unfiltered, calibrated (ir)radiance and reflectance spectra. The reflectance data are processed either with the Fingerprint or the 3C method. Subsequently, quality control filters can be applied and data visualized. The scripts allow downloads per time window and per instrument. 
+The test script provided demonstrates how to download paged data from the So-Rad Geoserver layers hosted at PML. 
+These layers offer unfiltered, calibrated (ir)radiance and reflectance spectra. The reflectance data are processed either with the Fingerprint or the 3C method. 
+Subsequently, quality control filters can be applied and data visualized. The scripts allow downloads per time window and per instrument. 
