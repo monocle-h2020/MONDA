@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 
-Monda test script to retrieve So-Rad Rrs and (ir)radiance spectra from PML Geoserver using WFS standard,
-filter data using Quality Control principles, plot results, save Rrs spectra and core metadata (including QC masks)
+Monda example script to retrieve So-Rad Rrs and (ir)radiance spectra from PML Geoserver using WFS standard,
+filter data using Quality Control principles, plot results, save Rrs spectra and some metadata (including QC masks).
+The data and plots will be written into daily binned files.
 
 ---------------------------------------------------------------------------------
 
@@ -14,11 +15,15 @@ The Rrs spectra are available from two separate algorithms:
 
 The FP and 3C outputs have different structures, quality control chains and plot functions: use the -a argument to specify which should be used.
 
-Example usage via command line (see parse-args function in sorad.data_access.sorad_access)
-    test_wfs_fpand3c.py  -p PML_SR004 -a 3c -i 2021-08-16 -f 2021-08-22 -c True -t test_folder
+For command line options please use
+    python sorad_retrieval_qc_plot_test.py -h
 
-This will produce results from So-Rad platform with serial number PML_SR004 using 3C Rrs processing scheme
-between 2021-08-16 and 2021-08-22 saved to test folder.
+
+For example,
+    python sorad_retrieval_qc_plot_test.py -a 3c -p PML_SR004 -i "2021-08-16 00:00:00" -e "2021-08-22 23:59:59" -r -m -c -g
+
+will plot and save all results from So-Rad platform PML_SR004 for the given time period, with Rrs derived from the 3C algorithm.
+Files will be written to a default folder in the current directory (override this by providing an alternative path with the -t argument).
 
 -------------------------------------------------------------------------------
 
@@ -32,8 +37,8 @@ Default quality control chain for FP:
        (ii)  Rrs-based filtering (similarity spectrum, and filter based on max/min of Rrs)
        Note: `algorithmic filtering' is already applied to FP data on the geoserver (based on rho_s bounds)
 
-Optional filters:
-       (i) Rrs shape based filtering (currently includes `coastal water filter' from Warren et al. 2019). 
+Optional filters (commented out below):
+       (i) Rrs shape based filtering (currently includes `coastal water filter' from Warren et al. 2019).
            Users are encouraged to apply filters for their local water type
        (ii) Variability filtering (based on z-score), following Groetsch et al. 2017.
 
@@ -50,6 +55,7 @@ import datetime
 import logging
 import pandas as pd
 import argparse
+from math import ceil
 
 log = logging.getLogger('sorad-test')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
@@ -88,27 +94,26 @@ def run_example(platform_id = 'PML_SR004',
 
     initial_day = start_time.date()
     final_day = end_time.date()
+    assert final_day >= initial_day
 
     # split the request into discrete days
-    days = (final_day - initial_day).days
-    for c, i in enumerate(range(days)):
+    days = (final_day - initial_day).days + 1
+    log.info(f"Request spans {days} day(s)")
 
-        if c == 0:
-            # first time period starting from requested timestamp, ending at midnight
-            datetime_i    = start_time
-            datetime_next = datetime.datetime(initial_day.year, initial_day.month, initial_day.day+1, 0, 0, 0)
-        elif c == days:
-            this_day      = initial_day + datetime.timedelta(days = i)
-            datetime_i    = datetime.datetime(this_day.year, this_day.month, this_day.day, 0, 0, 0)
-            datetime_next = end_time
-        else:
-            this_day      = initial_day + datetime.timedelta(days = i)
-            datetime_i    = datetime.datetime(this_day.year, this_day.month, this_day.day, 0, 0, 0)
-            datetime_next = datetime.datetime(this_day.year, this_day.month, this_day.day+1, 0, 0, 0)
+    for i in range(days):
+        this_day      = initial_day + datetime.timedelta(days = i)
+        datetime_i    = datetime.datetime(this_day.year, this_day.month, this_day.day, 0, 0, 0)
+        datetime_e    = datetime.datetime(this_day.year, this_day.month, this_day.day, 23, 59, 59, 999)
 
+        if datetime_i < start_time:
+            datetime_i = start_time
+        if datetime_e > end_time:
+            datetime_e = end_time
+
+        log.info(f"Request timeframe {datetime_i.isoformat()} - {datetime_e.isoformat()}")
 
         response = access.get_wfs(platform = platform_id,
-                                  timewindow = (datetime_i, datetime_next),
+                                  timewindow = (datetime_i, datetime_e),
                                   layer=layer)
 
 
@@ -125,6 +130,7 @@ def run_example(platform_id = 'PML_SR004',
                gps_speeds, tilt_avgs, tilt_stds = unpack_response(response, rrsalgorithm, wl_output)
 
         if output_plots:
+            log.info("Creating (ir)radiance plots")
             plots.plot_ed_ls_lt(ed, ls, lt, time, wl_output, file_id, target)
 
 
@@ -159,12 +165,14 @@ def run_example(platform_id = 'PML_SR004',
         # q_var = qc_radiometric_variability(ed, lt, ls, time, wl, windowlength = 60, var_threshold =1.1, var_metric = 'zscore_max')
 
         if output_plots and rrsalgorithm == 'fp':
+            log.info("Creating Rrs plots")
             plots.plot_rrs_qc_fp(rrs, time, rrswl, q_rad, q_rad_rrs,              file_id, target)
             plots.plot_coveragemap(lat, lon, q_rad, file_id, target, map_resolution = 11)
             plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
 
         elif output_plots and rrsalgorithm == '3c':
-            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_rad, q_rad_3c, q_rad_3c_rrs, file_id, target)
+            log.info("Creating Rrs plots")
+            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_rad, q_rad_3c, q_rad_rrs, file_id, target)
             plots.plot_coveragemap(lat, lon, q_rad_3c, file_id, target, map_resolution = 11)
             plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
 
@@ -181,12 +189,13 @@ def run_example(platform_id = 'PML_SR004',
         d['tilt_std'] = tilt_stds
         d['rel_view_az '] = rel_view_az
         d['q_1'] = q_rad     # Mask after step (i) QC
-        d['q_2'] = q_rad_rrs # Mask after step (ii) QC. Currently recommended for FP rrs data analysis
 
-        if rrsalgorithm == '3c':
-            d['q_1'] = q_rad         # Mask after step (i) QC
-            d['q_2'] = q_rad_3c      # Mask after step (ii) QC
-            d['q_3'] = q_rad_3c_rrs  # Mask after step (iii) QC: currently recommended for 3C  rrs data analysis
+        if rrsalgorithm == 'fp':
+            d['q_2'] = q_rad_rrs # Mask after step (ii) QC. Currently recommended for FP rrs data analysis
+
+        elif rrsalgorithm == '3c':
+            d['q_2'] = q_rad_3c   # Mask after step (ii) QC
+            d['q_3'] = q_rad_rrs  # Mask after step (iii) QC: currently recommended for 3C  rrs data analysis
 
         # optional to output all qc masks
         # q_keys = [i for i in locals() if i.startswith('q_')]
@@ -225,8 +234,10 @@ def run_example(platform_id = 'PML_SR004',
 
 
 def unpack_response(response, rrsalgorithm, wl_out):
-
-    #log.info(response['result'][0].keys())   # show all available fields
+    """
+    Unpack the WFS response
+    """
+    #log.info(response['result'][0].keys())   # uncomment to show all available fields
 
     time          = [response['result'][i]['time'] for i in range(len(response['result']))]
     lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
@@ -258,7 +269,7 @@ def unpack_response(response, rrsalgorithm, wl_out):
 
 
 def parse_args():
-
+    """Interpret command line arguments"""
     parser = argparse.ArgumentParser()
     parser.add_argument('-a','--algorithm',   required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
     parser.add_argument('-p','--platform',    required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
@@ -285,10 +296,11 @@ if __name__ == '__main__':
     args = parse_args()
 
     if not any([args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots]):
-        log.warning("No outputs specified (see -h for help)")
+        log.warning("No plots or data outputs specified (see -h for help)")
 
     if args.target is None:
         args.target = os.path.join('.', 'So-Rad_test-output')
+
     if not os.path.isdir(args.target):
         os.mkdir(args.target)
 

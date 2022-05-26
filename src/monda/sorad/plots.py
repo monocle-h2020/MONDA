@@ -12,6 +12,8 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022.
 
 
 import os
+import sys
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -22,12 +24,37 @@ import cartopy.io.img_tiles as cimgt
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
+log = logging.getLogger('sorad-plotter')
+myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
+formatter = logging.Formatter(myFormat)
+logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
+
 
 # sub routines
 def wl_find(wl, target):
     "Finds wavelength index nearest to target"
     return np.argmin((np.array(wl)-target)**2)
 
+def percentile_amplitude(values):
+    "determine the 99th percentile of a range to limit y axis range limit"
+    values =values[np.isfinite(values)]
+    values = values[values>=0.0]
+    return np.percentile(values, 99)
+
+def outlier_limit(values):
+    "determine outlier amplitude to limit y axis range limit"
+    values = values[np.isfinite(values)]
+    values = values[values>=0.0]
+    outlier_limit = np.median(values) + 1.5 * np.std(values)
+    ylimit = np.max(values[values<outlier_limit])
+    return ylimit
+
+def find_max_in_wl_range(wl, spectra, minwl, maxwl):
+    "find peak amplitude wihtin a wavelength range for a set of spectra"
+    wlmin = wl_find(wl, 400)
+    wlmax = wl_find(wl, 800)
+    maxima = np.amax(spectra[:, wlmin:wlmax], axis=0)
+    return maxima
 
 # plot functions
 def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
@@ -41,6 +68,8 @@ def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
     plt.plot(wl,ed.T,linewidth=0.4,alpha=0.6)
     plt.xlim(350,900)
     plt.gca().set_ylim(bottom =-0.001)
+    ymax = outlier_limit(find_max_in_wl_range(wl, ed, 400, 800))  # limit y axis based on maximum values < outlier range
+    plt.gca().set_ylim(top = ymax)
     #plt.grid()
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('$E_{d}$ [mW m$^{-2}$ nm$^{-1}$]')
@@ -49,6 +78,8 @@ def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
     plt.plot(wl,ls.T,linewidth=0.4,alpha=0.6)
     plt.xlim(350,900)
     plt.gca().set_ylim(bottom =-0.001)
+    ymax = outlier_limit(find_max_in_wl_range(wl, ls, 400, 800))  # limit y axis based on maximum values < outlier range
+    plt.gca().set_ylim(top = ymax)
     #plt.grid()
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('$L_{s}$ [mW m$^{-2}$ sr$^{-1}$ nm$^{-1}$]')
@@ -57,10 +88,13 @@ def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
     plt.plot(wl,lt.T,linewidth=0.4,alpha=0.6)
     plt.xlim(350,900)
     plt.gca().set_ylim(bottom =-0.001)
+    ymax = outlier_limit(find_max_in_wl_range(wl, lt, 400, 800))  # limit y axis based on maximum values < outlier range
+    plt.gca().set_ylim(top = ymax)
     #plt.grid()
     plt.xlabel('Wavelength [nm]')
     plt.ylabel('$L_{t}$ [mW m$^{-2}$ sr$^{-1}$ nm$^{-1}$]')
 
+    plt.tight_layout()
     plt.savefig(os.path.join(target, file_id + '_Ed-Ls-Lt-spectra.png'), format='png', dpi=150)
 
     return
@@ -225,7 +259,7 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
 
         plt.ylim(0, 1.6)
         plt.legend()
-        plt.grid()
+        #plt.grid()
         plt.xlabel('UTC time [hrs]')
 
         plt.subplot(2,1,2)
@@ -237,7 +271,7 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
         plt.plot(rrswl, np.nanmean(rrs[q==1], axis=0), color='black', linewidth=2, alpha=1, label='Mean spectrum')
         plt.xlim(350, 900)
         plt.gca().set_ylim(bottom =-0.001)
-        plt.grid()
+        #plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$  [sr$^{-1}$]')
         plt.legend()
