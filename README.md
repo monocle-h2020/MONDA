@@ -87,6 +87,36 @@ Please use the instrument identification serial number and date when searching f
 #### Functionality of the submodule
 An example script is provided to connect with the WISPcloud API and subsequently plot Rrs and (ir)radiance measurements using date and instrument serial number as input arguments. 
 
+#### Minimum code example 
+```
+from monda.WISP import access
+import numpy as np
+
+instrument = "WISPstation001"
+day = "2019-08-16"
+start = "10:00:00"
+stop = "15:00:00"
+
+def list_to_array(lstring):
+    try:
+        arr = np.array(lstring.lstrip('[').rstrip(']').split(',')).astype(np.float64)
+        return arr
+    except:
+        return None
+
+REQUEST = 'REQUEST=GetData&INSTRUMENT={}&include=measurement.date,measurement.id,level2.reflectance,site.name,level2.quality&TIME={}T{},{}T{}'\
+          .format(instrument, day, start, day, stop)
+
+l2r = access.WISP_data_API_call(REQUEST)
+
+print(l2r[0]) # data header
+
+rrs = [list_to_array(meas['level2.reflectance']) for meas in l2r[1:]]
+wl = np.array(list(range(350, 901, 1)))
+stations = [meas['site.name'] for meas in l2r[1:]]
+times = [meas['measurement.date'][10:16] for meas in l2r[1:]]
+```
+
 
 ## So-Rad
 The So-Rad is a low-power, low cost autonomous platform to obtain high-frequency water-leaving reflectance from 
@@ -115,7 +145,7 @@ The test script provided demonstrates how to download paged data from the So-Rad
 These layers offer unfiltered, calibrated (ir)radiance and reflectance spectra. The reflectance data are processed either with the Fingerprint or the 3C method. 
 Subsequently, quality control filters can be applied and data visualized. The scripts allow downloads per time window and per instrument. 
 
-#### Minimum example
+#### Minimum code example
 
 ```
 from monda.sorad import access, plots, qc
