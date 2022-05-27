@@ -118,7 +118,7 @@ times = [meas['measurement.date'][10:16] for meas in l2r[1:]]
 ```
 
 
-## So-Rad
+## Solar-Tracking Radiometry platform (So-Rad)
 The So-Rad is a low-power, low cost autonomous platform to obtain high-frequency water-leaving reflectance from 
 non-stationary platforms such as ships and buoys. So-Rad software is highly configurable and open-source. 
 So-Rad optimizes the measurement geometry of commercially available sensors which increases the number of successful 
@@ -132,7 +132,7 @@ performance of algorithms that separate atmospheric and water-leaving radiance, 
 optically complex waters such as coastal seas and inland waters.  High-quality reference measurements are required, 
 collected under optimal observation conditions (solar and viewing azimuth, sun elevation).
 
-#### Added Value of So-Rad ####
+#### Added Value of So-Rad
 * Off-shore satellite validation is currently limited to research vessels and fixed moorings that are costly to 
 maintain. The So-Rad can be installed on non-stationary platforms and is ideally suited to be included on merchant 
 vessels. Ferry routes are recommended because of predictable routes and schedules. Periodic sensor maintenance can be 
@@ -186,6 +186,47 @@ lt = access.get_l1spectra(response, 'lt_', wl_out)
 
 rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
 rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
+```
+
+## Hyperspectral pyranometer (HSP)
+
+The HSP1 measures the spectrum of downwelling solar radiation, and how this is partitioned between Direct, Diffuse and Global Irradiance. 
+This sensor provides a reference for the colour or spectral distribution of sunlight near the water's surface.
+
+HSP1 can be used to improve the accuracy of other sensors making direct measurements of the reflected light from the water body.
+
+#### Added Value of the HSP
+
+* Measurements can be used to improve satellite water quality products by removing or correcting for atmospheric effects, especially in coastal or inland waters.
+* Improving data products from other surface-based instruments (such as other MONOCLE instruments) where a reference is normally too expensive
+* In situations where existing equipment is difficult or impossible to use such as moving platforms, boats, buoys or aircraft.
+
+#### Functionality of the submodule
+
+The access function downloads paged data from the HSP Geoserver layer hosted at PML. Queries can be refined based on time, sensor_id or bounding box.
+Extend the access function to include any additional CQL filters needed. 
+
+The HSP geoserver layer offers unfiltered, calibrated total and diffused irradiance spectra. 
+
+#### Minimum code example
+
+```
+from monda.hsp import access
+import datetime
+
+sensor_id = None
+start_time = datetime.datetime(2021,10,21,12,0,0)
+end_time   = datetime.datetime(2021,10,21,14,0,0)
+bbox = None
+layer = 'rsg:hsp_public_view_full'
+
+response = access.get_wfs(sensor = sensor_id,
+                          timewindow = (start_time, end_time),
+                          layer=layer, bbox=bbox)
+
+# show first record
+for key, val in response['result'][0].items():
+    print(f"{key}: {val}")
 ```
 
 
