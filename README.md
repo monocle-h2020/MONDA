@@ -187,3 +187,53 @@ lt = access.get_l1spectra(response, 'lt_', wl_out)
 rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
 rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
 ```
+
+
+## Mini-Secchi
+Secchi disk measurements have been used to record water transparency over hundreds of years, and are used as a proxy for eutrophication 
+in international water quality monitoring programmes. Recently, a simple hand-held device was designed to measure the Secchi depth 
+and water colour (Forel-Ule scale) of lake, estuarine and nearshore regions. The device additionally comes shipped with a clip for pH paper. 
+
+The mini-secchi App, available from Google play and Apple stores, aids with data collection through smartphones. The app will:
+- provide instructions for safe and correct use
+- gather all measurement data, including (optional) photos and quality control questions
+- upload measurement data to the PML server
+- in future, the app will show the user the results from nearby and recent observations. 
+
+Once data are received at PML they are immediately processed and made available in WMS/WFS format. The code example below illustrates how to query the WFS. 
+
+The Mini-Secchi disk was developed as a school project in collaboration with PML. 
+Due to increased demand for larger quantities of Mini-Secchi disks in citizen science projects, the developers founded Brewtek to produce the devices at scale. 
+
+
+#### Added value
+The device is manufactured with marine resistant materials (mostly biodegradable) using a 3D printer and basic workshop tools. 
+It is inexpensive to manufacture, lightweight, easy to use, and accessible to a wide range of users. 
+
+It builds on a long tradition in optical limnology and oceanography, but is modified for ease of operation in smaller water bodies, and from small watercraft and platforms.
+
+The 3D-printable design is particularly useful in community, educational and hobbyist settings.
+For more information see the Mini-Secchi disk pages on the [project website](https://monocle-h2020.eu/Sensors_and_services/Mini-secchi_disk)
+
+
+#### Functionality of the Mini-Secchi disk and app
+
+Note: Mini-Secchi disk data on the geoserver are still a work in progress. Data formatting is likely to change, and test records have not yet been removed. 
+
+#### Minimum code example
+
+```
+from monda.minisecchi import access
+import datetime
+
+start_date = datetime.datetime(2022,1,1,0,0,0)
+end_date = datetime.datetime(2022,8,1,0,0,0)
+
+geoserver_layer = 'rsg:minisecchi_public_view'
+bbox = None  # alternatively supply a tuple of (corner1 lat, corner1 lon, corner2 lat, corner2 lon)
+
+response = access.get_wfs(count=1000, timewindow=(start_date, end_date), layer=geoserver_layer, bbox=bbox)
+
+data = response['result']
+print(data[0].keys())
+```
