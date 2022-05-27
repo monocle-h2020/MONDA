@@ -114,3 +114,46 @@ autonomous operation.
 The test script provided demonstrates how to download paged data from the So-Rad Geoserver layers hosted at PML. 
 These layers offer unfiltered, calibrated (ir)radiance and reflectance spectra. The reflectance data are processed either with the Fingerprint or the 3C method. 
 Subsequently, quality control filters can be applied and data visualized. The scripts allow downloads per time window and per instrument. 
+
+#### Minimum example
+
+```
+from monda.sorad import access, plots, qc
+import datetime
+import numpy as np
+
+# collect data from any So-Rad platform obtained in the past 24h (adjust time range if this returns no data)
+start_time =   datetime.datetime.now() - datetime.timedelta(days=1)
+end_time   =   datetime.datetime.now()
+
+platform_id = None  # Choose None for any platform
+
+# choose 3c or fp as algorithm source in the layer name below
+response = access.get_wfs(platform = platform_id,
+                          timewindow = (start_time, end_time),
+                          layer='rsg:sorad_public_view_3c_full',
+                          bbox=None)
+
+print(response['result'][0].keys())   # show all available fields
+
+# extract (meta)data from the response
+time          = [response['result'][i]['time'] for i in range(len(response['result']))]
+lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
+platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
+platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
+gps_speed     = np.array([response['result'][i]['id'] for i in range(len(response['result']))])
+tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+
+# define common wavelength grid for (ir)radiance data (these are provided at their native, sensor-specific resolution
+wl_out = np.arange(300, 1001, 1)
+ed = access.get_l1spectra(response, 'ed_', wl_out) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
+ls = access.get_l1spectra(response, 'ls_', wl_out)
+lt = access.get_l1spectra(response, 'lt_', wl_out)
+
+rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
+rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
+```
