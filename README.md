@@ -189,7 +189,7 @@ rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['
 ```
 
 
-## Mini-Secchi
+## Mini-Secchi disk
 Secchi disk measurements have been used to record water transparency over hundreds of years, and are used as a proxy for eutrophication 
 in international water quality monitoring programmes. Recently, a simple hand-held device was designed to measure the Secchi depth 
 and water colour (Forel-Ule scale) of lake, estuarine and nearshore regions. The device additionally comes shipped with a clip for pH paper. 
