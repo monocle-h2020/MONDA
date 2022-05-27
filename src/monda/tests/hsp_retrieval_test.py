@@ -27,8 +27,8 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 def run_example(sensor_id = None,
-                start_time = datetime.datetime(2021,10,21,0,0,0),
-                end_time   = datetime.datetime(2021,10,22,23,59,59),
+                start_time = datetime.datetime(2021,10,21,12,0,0),
+                end_time   = datetime.datetime(2021,10,21,14,0,0),
                 bbox = None):
 
     """
@@ -54,6 +54,13 @@ def run_example(sensor_id = None,
     if response['length'] == 0:
         return None
 
+
+
+    # show first record
+    for key, val in response['result'][0].items():
+        log.info(f"{key}: {val}")
+
+
     return response
 
 
@@ -62,10 +69,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s','--sensor',      required = False, type = str, default = None, help = "Instrument serial number")
     parser.add_argument('-i','--start_time',  required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
-                                              default = datetime.datetime(2021,10,21,0,0,0),
+                                              default = datetime.datetime(2021,10,21,12,0,0),
                                               help = "Initial UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
     parser.add_argument('-e','--end_time',    required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
-                                              default = datetime.datetime(2021,10,22,23,59,59),
+                                              default = datetime.datetime(2021,10,21,14,0,0),
                                               help = "Final UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
     parser.add_argument('-b','--bbox',        required = False, type = float, nargs='+', default = None, help = "Restrict query to bounding box format [corner1lat corner1lon corner2lat corner2lon]")
 
