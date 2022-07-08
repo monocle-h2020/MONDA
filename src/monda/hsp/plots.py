@@ -3,14 +3,14 @@
 """
 
 (i) Plot functions for monda HSP data download show irradiance spectra 
-(ii) Method to extract AOT (Aerosol Optical Thicknes susing direct-beam method 
+(ii) Method to extract AOT (Aerosol Optical Thickness using direct-beam method 
 (based on wood et al. 2017).
 (iii)  Plot functions for AOT spectra.
 
 ------------------------------------------------------------------------------
 
 Tom Jordan - tjor@pml.ac.uk - July 2022
-John Wood -  john@peakdesign.co.uk - Jully 2022
+John Wood -  john@peakdesign.co.uk - July 2022
 
 """
 
@@ -26,8 +26,6 @@ import matplotlib.cm as cm
 from scipy.interpolate import interp1d # interpolation and filtering
 from scipy.signal import savgol_filter
 
-
-
 import ephem # library for solar angle computations
 
 
@@ -37,22 +35,23 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
+# general subroutines
 def wl_find(wl, target):
     "Finds wavelength index nearest to target"
     return np.argmin((np.array(wl)-target)**2)
 
 
 def find_max_in_wl_range(wl, spectra, minwl, maxwl):
-    "find peak amplitude wihtin a wavelength range for a set of spectra"
+    "find peak amplitude within a wavelength range for a set of spectra"
     wlmin = wl_find(wl, 400)
     wlmax = wl_find(wl, 800)
     maxima = np.amax(spectra[:, wlmin:wlmax], axis=0)
     return maxima
 
 
-
+# hsp irradiance plot function
 def plot_irradiance_hsp(wl, eds, ed, IDR, time, file_id, target):
-    "plot function for eds, ed and IDR"
+    "plot function for eds, ed and IDR (Integrated Diffuse Ratio)"
    
     eds = 1000*eds # convert to mW
     ed = 1000*ed
@@ -61,7 +60,7 @@ def plot_irradiance_hsp(wl, eds, ed, IDR, time, file_id, target):
     plt.rc('font', size=24)
     plt.suptitle(file_id)
     
-    colors_1 = cm.autumn(np.linspace(0, 1, len(time))) 
+    colors_1 = cm.autumn(np.linspace(0, 1, len(time))) # color maps
     colors_2 = cm.cool(np.linspace(0, 1, len(time)))
     
     # 1 Spectral plot for Ed
@@ -126,9 +125,9 @@ def plot_irradiance_hsp(wl, eds, ed, IDR, time, file_id, target):
     return
 
 
-# sub routines to calculate AOT & spectral plots
+# sub routines used to calculate AOT 
 def calc_solar_zenith(time, lat, lon):
-    'solar zenith angle function from ephem library. Acts on timstamp, and lat-lon vectors'''
+    'solar zenith angle function from ephem library. Acts on timestamp, and lat-lon vectors'''
     solar_zenith = np.nan*np.ones(len(time))
     for i in range(len(time)):    
         obs = ephem.Observer()
@@ -139,6 +138,7 @@ def calc_solar_zenith(time, lat, lon):
         solar_zenith[i] = 90 - (sun.alt * 180. / np.pi)
    
     return solar_zenith
+
 
 def calc_rayleigh(wl, pressure = 1013.25):
     'function for Rayleigh component of atmospheric optical thickness'
@@ -153,6 +153,7 @@ def calc_rayleigh(wl, pressure = 1013.25):
     
     return tau_r
 
+
 def calc_air_mass(solar_zenith, pressure = 1013.25):
     'function for atmospheric air mass'
     a = 0.50572 
@@ -161,7 +162,7 @@ def calc_air_mass(solar_zenith, pressure = 1013.25):
     C = np.cos(np.pi/180.0 * solar_zenith)
     mu = C + a*(b - solar_zenith)**(-c) # inverse of atm. air mass 
     
-    m = pressure / 1013.25 / mu # used as defintion of air mass
+    m = pressure / 1013.25 / mu # used as definition of atm. air mass
     
     return m
 
@@ -202,21 +203,21 @@ def calc_aot_direct(ed, eds, e_solar, time, solar_zenith, wl, use_filter = True,
         m = calc_air_mass(solar_zenith[i]) # solar air mass
         edd[i,:] = edd[i,:]/np.cos((np.pi/180)*solar_zenith[i]) # scaling sometimes referred to as `edd_ni' 
         tau_t[i,:] = -(1/m)*np.log(edd[i,:]/e_toa) # total optical thickness from beers' law
-        tau_a[i,:] = tau_t[i,:] - tau_r  # tau_a that has not been emprically corrected
+        tau_a[i,:] = tau_t[i,:] - tau_r  # tau_a that has not been empirically corrected
         tau_a[i,:] = (tau_a[i,:] - offset_am(m) - offset_wl) * slope_wl # tau_a that has been empirically corrected 
         tau_err[i] =  (1/m)*0.07  
         
     return tau_t, tau_a, tau_err
 
 
-def plot_aot(wl, tau_a, IDR, time, file_id, target, IDR_threshold=0.5):
-    "plot function for aot. IDR < 0.6 used as intial QC"
+def plot_aot(wl, tau_a, IDR, time, file_id, target, IDR_threshold = 0.5):
+    "plot function for AOT. IDR < 0.5 used as intial QC filter"
    
     plt.figure(figsize=(18,14))
     plt.rc('font', size=24)
     plt.suptitle(file_id)
     
-    time = np.array(time)[IDR < IDR_threshold] # intial QC Step based on IDR
+    time = np.array(time)[IDR < IDR_threshold] # intial QC Step based on IDR <0.5
     tau_a = tau_a[IDR < IDR_threshold, :]
     
     colors_1 = cm.viridis(np.linspace(0, 1, len(time)))

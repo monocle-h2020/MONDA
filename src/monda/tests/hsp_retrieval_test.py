@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 
-Monda example script to retrieve HSP data from PML Geoserver using WFS standard,
+Monda example script to retrieve HSP data from PML Geoserver using WFS standard
+
+run_exampleincludes options for global-difffuse irradiance plot functions, AOT 
+computations, AOT plot functions, and writing to a csv file.
+ 
 
 ---------------------------------------------------------------------------------
 
@@ -10,7 +14,7 @@ To see all command line options use:
 
 -------------------------------------------------------------------------------
 
-Stefan Simis - stsi@pml.ac.uk - May 2022ll
+Stefan Simis - stsi@pml.ac.uk - May 2022
 Tom Jordan - tjor@pml.ac.uk - July 2022
 
 """
@@ -103,7 +107,7 @@ def run_example(sensor_id = None,
        d['lat'] = lat
        d['lon'] = lon
   
-       if output_irradiance:    
+       if output_irradiance:  # outputs eds and ed to file 
            header = ",".join([str(w) for w in wl])
            ed_filename = os.path.join(target, file_id + '_Ed.csv')
            eds_filename = os.path.join(target, file_id + '_Eds.csv')      
@@ -114,7 +118,7 @@ def run_example(sensor_id = None,
            np.savetxt(ed_filename, ed, delimiter=',', header = header, fmt='%.8f')
            np.savetxt(eds_filename, eds, delimiter=',', header = header, fmt='%.8f')
            
-       if output_aot:      
+       if output_aot:      # outputs total and aeorsol optical thickness to file
           solar_zenith = plots.calc_solar_zenith(time, lat, lon) # calculate olar zenith
           esolar = np.array(pd.read_table(path_hsp + '/SolarSpectrum.txt',skiprows=1)['Solar ET']) # solar spectrum
           tau_t, tau_a, tau_err = plots.calc_aot_direct(ed, eds, esolar, time, solar_zenith, wl, use_filter = True) # calculate optical thickness components
@@ -136,7 +140,7 @@ def run_example(sensor_id = None,
            d_filename = os.path.join(target, file_id + '_metadata.csv')
            if os.path.exists(d_filename):
               log.warning(f"File {d_filename} was overwritten")
-              d.to_csv(d_filename)
+           d.to_csv(d_filename)
 
        if output_irr_plots:
            log.info("Creating direct and diffuse irradiance plots")
@@ -145,10 +149,8 @@ def run_example(sensor_id = None,
        if output_aot_plots:
            log.info("Creating aot plots")         
            plots.plot_aot(wl, tau_a, IDR, time, file_id, target)
-    
 
     return response
-
 
 
 def unpack_response(response):
@@ -174,7 +176,6 @@ def unpack_response(response):
     return time, lat, lon, sample_id, platform_id, ed, eds, IDR, wl 
 
 
-
 def parse_args():
     """Interpret command line arguments"""
     parser = argparse.ArgumentParser()
@@ -193,7 +194,6 @@ def parse_args():
     parser.add_argument('-a','--output_aot',  required = False, action='store_true', help = "Output aerosol optical thickness to csv file")
     parser.add_argument('-p','--output_irr_plots',  required = False, action='store_true', help = "Output plots")
     parser.add_argument('-q','--output_aot_plots',  required = False, action='store_true', help = "Output plots")
-
 
     args = parser.parse_args()
 
