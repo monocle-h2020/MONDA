@@ -24,6 +24,9 @@ import matplotlib.dates as mdates
 import matplotlib.cm as cm
 
 from scipy.interpolate import interp1d # interpolation and filtering
+from scipy.signal import savgol_filter
+
+
 
 import ephem # library for solar angle computations
 
@@ -163,11 +166,15 @@ def calc_air_mass(solar_zenith, pressure = 1013.25):
     return m
 
 
-def calc_aot_direct(ed, eds, e_solar, time, solar_zenith, wl):
+def calc_aot_direct(ed, eds, e_solar, time, solar_zenith, wl, use_filter = True, filter_window = 31):
     'function for total and Aerosol component of atmospheric optical thickness using'
     'direct beam method (Wood et al. 2017)'
    
     edd = ed - eds # direct component
+    
+    # filtering step - better matches spectral resolution of edd and e_solar
+    edd = savgol_filter(edd, filter_window, polyorder=3, axis=1 ,mode='constant')
+    e_solar = savgol_filter(e_solar, filter_window, polyorder=3, mode='constant')
     
     # initalize tau_r, tau_t, tau_a
     tau_r = calc_rayleigh(wl)   

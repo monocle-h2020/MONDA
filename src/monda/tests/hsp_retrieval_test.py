@@ -10,7 +10,7 @@ To see all command line options use:
 
 -------------------------------------------------------------------------------
 
-Stefan Simis - stsi@pml.ac.uk - May 2022
+Stefan Simis - stsi@pml.ac.uk - May 2022ll
 Tom Jordan - tjor@pml.ac.uk - July 2022
 
 """
@@ -117,7 +117,7 @@ def run_example(sensor_id = None,
        if output_aot:      
           solar_zenith = plots.calc_solar_zenith(time, lat, lon) # calculate olar zenith
           esolar = np.array(pd.read_table(path_hsp + '/SolarSpectrum.txt',skiprows=1)['Solar ET']) # solar spectrum
-          tau_t, tau_a, tau_err = plots.calc_aot_direct(ed, eds, esolar, time, solar_zenith, wl) # calculate optical thickness components
+          tau_t, tau_a, tau_err = plots.calc_aot_direct(ed, eds, esolar, time, solar_zenith, wl, use_filter = True) # calculate optical thickness components
 
           header = ",".join([str(w) for w in wl])
           tau_t_filename = os.path.join(target, file_id + '_tau_t.csv') # total optical thickness
