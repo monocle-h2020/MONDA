@@ -30,8 +30,8 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
 def parse_args():
-    default_start = datetime.datetime.now().date() - datetime.timedelta(days=7)
-    default_end = datetime.datetime.now().date()
+    default_start = datetime.datetime.strptime('2022-01-01', '%Y-%m-%d')
+    default_end = datetime.datetime.strptime('2022-07-20', '%Y-%m-%d')
 
     parser = argparse.ArgumentParser()
 
@@ -49,13 +49,20 @@ def run_example(start_date, end_date, geoserver_layer='rsg:miniscecchi_public_vi
     response = access.get_wfs(count=1000, timewindow=(start_date, end_date), layer=geoserver_layer, bbox=bbox)
     data = response['result']
 
-    datafields = data[0].keys()
-    header = ",".join([k for k in datafields])
+    try:
+        datafields = data[0].keys()
+    except IndexError:
+        print("no data found for time and region specified")
+    else:
+        header = ",".join([k for k in datafields])
 
     if target is not None:
         # attempt to write data to target file
         if os.path.isfile(target):
             log.warning(f"Existing data file will be overwritten")
+        if os.path.dirname(target)=='':
+            log.warning(f"no directory stated so using current directory for output of file {target}")
+            target='./'+target
         if not os.path.exists(os.path.dirname(target)):
             os.mkdir(os.path.dirname(target))
 
