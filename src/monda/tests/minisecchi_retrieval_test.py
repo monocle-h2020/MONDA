@@ -61,8 +61,8 @@ def run_example(start_date, end_date, geoserver_layer='rsg:miniscecchi_public_vi
         if os.path.isfile(target):
             log.warning(f"Existing data file will be overwritten")
         if os.path.dirname(target)=='':
-            log.warning(f"no directory stated so using current directory for output of file {target}")
-            target='./'+target
+            target = os.getcwd()+target
+            log.warning(f"no directory stated so using current working directory for output of file: {target}")
         if not os.path.exists(os.path.dirname(target)):
             os.mkdir(os.path.dirname(target))
 
