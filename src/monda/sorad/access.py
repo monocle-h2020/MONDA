@@ -196,27 +196,3 @@ def get_l1spectra(response, spec_id, wl_out=np.arange(350, 951, 1)):
         spec_matrix[i,:] = np.interp(wl_out, spec_wl, spec)  # interpolate to common wavelength grid
 
     return spec_matrix
-
-
-def get_l0spectra(response, spec_id):
-    """
-    (Ir)radiance spectrum in digtal counts
-    
-    response: response from WFS
-    spec_id:  identifier
-    wl:       output wavelength grid
-
-    output:
-    ndarray with rows timestamp index, columns wavelength
-    """
-
-    n_records = len(response['result'])
-    n_pixels = len(response['result'][0]['l0_ed_spectrum'])
-    
-    spec_matrix = np.nan*np.ones([n_records, n_pixels])
-    i = 0
-    for i, res in enumerate(response['result']):
-        spec = res['l0_' + spec_id + '_spectrum']
-        spec_matrix[i,:] = spec
-
-    return spec_matrix

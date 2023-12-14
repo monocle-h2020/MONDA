@@ -37,7 +37,7 @@ def wl_find(wl, target):
 
 def percentile_amplitude(values):
     "determine the 99th percentile of a range to limit y axis range limit"
-    values = values[np.isfinite(values)]
+    values =values[np.isfinite(values)]
     values = values[values>=0.0]
     return np.percentile(values, 99)
 
@@ -193,17 +193,17 @@ def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
     return
 
 
-def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
+def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=11):
     """ coverage map showing quality control filtered data: color scheme matches
     `results' plot"""
     if np.sum(q) > 0:
         colors= cm.cool(np.linspace(0, 1, int(sum(q))))
 
         plt.figure(figsize=(15,10))
-        extent = [np.floor(np.min(lon*10))/10, np.ceil(np.max(lon*10))/10, np.floor(np.min(lat*10))/10, np.ceil(np.max(lat*10))/10]
-        request = cimgt.Stamen('terrain-background')
+        extent = [np.floor(np.min(lon*100))/100, np.ceil(np.max(lon*100))/100, np.floor(np.min(lat*100))/100, np.ceil(np.max(lat*100))/100]
+        request = cimgt.StamenTerrain()
         ax = plt.axes(projection=ccrs.PlateCarree())
-        ax.add_image(request, 10)
+        ax.add_image(request, map_resolution)
         ax.set_extent(extent, ccrs.PlateCarree())
         gl = ax.gridlines(draw_labels=True)
         gl.top_labels_top = gl.right_labels = False
@@ -211,7 +211,7 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
         gl.yformatter =  LATITUDE_FORMATTER
         gl.xlabel_style = {'size': 12,  'rotation':45}
         gl.ylabel_style = {'size': 12,  'rotation': 0}
-        
+
         lon_formatter = LongitudeFormatter(zero_direction_label=True)
         lat_formatter = LatitudeFormatter()
         ax.xaxis.set_major_formatter(lon_formatter)
@@ -220,156 +220,14 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
         plt.scatter(lon[q==1][0],lat[q==1][0],s=15,color=colors[0],transform=ccrs.PlateCarree(),label='Passed QC')
         for i in range(int(sum(q))):
             plt.scatter(lon[q==1][i],lat[q==1][i],s=15,color=colors[i],transform=ccrs.PlateCarree())
-        
+
         plt.rc('font', size=14)
         plt.title(str(file_id))
         plt.legend()
 
-       # breakpoint()
         plt.savefig(os.path.join(target, file_id + '_coverage-map.png'), format='png', dpi=150)
 
     return
-
-
-
-def plot_coveragemap_total(lat, lon , q, file_id, target, map_resolution=7):
-    """ coverage map showing quality control filtered data: color scheme matches
-    `results' plot"""
-    if np.sum(q) > 0:
-        colors= cm.cool(np.linspace(0, 1, int(sum(q))))
-        
- #   breakpoint()     
-    
-
-    plt.figure(figsize=(15,10))
-    extent = [-12,27,35,68]
-    request = cimgt.GoogleTiles()
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.add_image(request, 6)
-    ax.set_extent(extent, ccrs.PlateCarree())
-    gl = ax.gridlines(draw_labels=True)
-    gl.top_labels_top = gl.right_labels = False
-    gl.xformatter =  LONGITUDE_FORMATTER
-    gl.yformatter =  LATITUDE_FORMATTER
-    gl.xlabel_style = {'size': 12,  'rotation':45}
-    gl.ylabel_style = {'size': 12,  'rotation': 0}
-        
-     
-      
-    lon_formatter = LongitudeFormatter(zero_direction_label=True)
-    lat_formatter = LatitudeFormatter()
-    ax.xaxis.set_major_formatter(lon_formatter)
-    ax.tick_params(labelsize=10)
-    # plt.scatter(lon,lat,s=8,color='gray',transform=ccrs.PlateCarree(), label='Failed QC')
-    lon = lon[q==1]
-    lat = lat[q==1]
-        
-    ax.scatter(lon[0:4438],lat[0:4438],s=30,color='magenta',transform=ccrs.PlateCarree(),label='So-Rad')
-    ax.scatter(lon[4439:],lat[4439:],s=30,color='yellow',transform=ccrs.PlateCarree(),label='So-Rad and HSP-1')
-    plt.legend()
-         # for i in range(int(sum(q))):
-              #  print(i)
-      #   plt.scatter(lon[q==1][i],lat[q==1][i],s=30,color='magenta',transform=ccrs.PlateCarree())
-    
-    plt.rc('font', size=20)
-    #plt.title(str(file_id))
-    # plt.legend()
-    
-    plt.savefig(os.path.join(target, file_id + 'total_coverage-map.png'), format='png', dpi=300)
-
-    return
-
-
-
-def plot_coveragemap_V2(lat, lon , q, file_id, target, map_resolution=10):
-    """ coverage map showing quality control filtered data: color scheme matches
-    `results' plot"""
-    if np.sum(q) > 0:
-        colors= cm.cool(np.linspace(0, 1, int(sum(q))))
-
-        plt.figure(figsize=(15,10))
-        extent = [np.floor(np.min(lon*10))/10, np.ceil(np.max(lon*10))/10, np.floor(np.min(lat*10))/10, np.ceil(np.max(lat*10))/10]
-        request = cimgt.Stamen('terrain-background')
-        ax = plt.axes(projection=ccrs.PlateCarree())
-        ax.add_image(request, 10)
-        ax.set_extent(extent, ccrs.PlateCarree())
-        gl = ax.gridlines(draw_labels=True)
-        gl.top_labels_top = gl.right_labels = False
-        gl.xformatter =  LONGITUDE_FORMATTER
-        gl.yformatter =  LATITUDE_FORMATTER
-        gl.xlabel_style = {'size': 12,  'rotation':45}
-        gl.ylabel_style = {'size': 12,  'rotation': 0}
-        
-        lon_formatter = LongitudeFormatter(zero_direction_label=True)
-        lat_formatter = LatitudeFormatter()
-        ax.xaxis.set_major_formatter(lon_formatter)
-        ax.tick_params(labelsize=10)
-  
-        
-        plt.rc('font', size=14)
-        plt.title(str(file_id))
-        plt.legend()
-
-       # breakpoint()
-        plt.scatter(lon[0:4438],lat[0:4438],s=30,color='magenta',transform=ccrs.PlateCarree(),label='So-Rad')
-        plt.scatter(lon[4439:],lat[4439:],s=30,color='cyan',transform=ccrs.PlateCarree(),label='So-Rad and HSP-1')
-        plt.legend()
-         # for i in range(int(sum(q))):
-                  #  print(i)
-          #   plt.scatter(lon[q==1][i],lat[q==1][i],s=30,color='magenta',transform=ccrs.PlateCarree())
-        
-        plt.rc('font', size=20)
-        plt.title(str(file_id))
-        # plt.legend()
-        
-        plt.savefig(os.path.join(target, file_id + 'total_coverage-map.png'), format='png', dpi=300)
-
-        
-
-    return
-
-
-#def GL_maplat(lat, lon , q, file_id, target, map_resolution=8):
-    
-       # plt.figure(figsize=(14,8))#
-       # plt.rc('font', size=24)
-        
-      #  min_lat = np.floor(np.nanmin(lat)) - 1
-       # max_lat = np.ceil(np.nanmax(lat)) + 1
-       # min_lon  = np.min(np.nanmin(lon)) - 1
-       # max_lon  = np.max(np.nanmax(lon)) + 1
-     #   extent = [min_lon, max_lon, min_lat, max_lat] 
-        #extent = [-4.40, -4.10, 50.00, 50.40] 
-        
-      #  request = cimgt.Stamen(style='terrain')
-      #  ax = plt.axes(projection=ccrs.PlateCarree())
-     #   ax.set_extent(extent, ccrs.PlateCarree())
-     #   ax.add_image(request,8)
-    #
-     #   gl = ax.gridlines(draw_labels=True)
-     #   gl.xlabels_top = gl.ylabels_right = False
-     #   gl.xformatter =  LONGITUDE_FORMATTER
-     #   gl.yformatter =  LATITUDE_FORMATTER
-     #   gl.xlabel_style = {'size': 18,  'rotation': 0}
-     #   gl.ylabel_style = {'size': 18,  'rotation': 0}
-        
-        
-      #  lon_formatter = LongitudeFormatter(zero_direction_label=True)
-     #   lat_formatter = LatitudeFormatter()
-       # ax.xaxis.set_major_formatter(lon_formatter)
-     #   ax.tick_params(labelsize = 10)
-    
-     #   time_plot = [mdates.date2num(time[i]) for i in range(len(time))]
-      #  loc = mdates.AutoDateLocator()
-      #  sc = plt.scatter(lon,lat,s=10, c = time_plot, cmap ='plasma', vmin = time_plot[0], vmax =time_plot[-1])
-       
-               
-     #   filename  = dir_figs +  fname + '.png'
-     #   plt.savefig(filename, dpi=400)
-         
-       
-  #      return
-
 
 
 def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
@@ -410,16 +268,14 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
         for i in range(int(sum(q))):
             plt.plot(rrswl, rrs[q==1][i,:], color=colors[i,:], linewidth=0.6, alpha=0.6)
 
-        plt.plot(rrswl, np.nanmedian(rrs[q==1], axis=0), color='black', linewidth=2, alpha=1, label='Median spectrum')
-        plt.xlim(400, 800)
+        plt.plot(rrswl, np.nanmean(rrs[q==1], axis=0), color='black', linewidth=2, alpha=1, label='Mean spectrum')
+        plt.xlim(350, 900)
         plt.gca().set_ylim(bottom =-0.001)
         #plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$  [sr$^{-1}$]')
         plt.legend()
-        
-        plt.tight_layout(pad=1.6)
-        
+
         plt.savefig(os.path.join(target, file_id + '_results.png'), format='png', dpi=150)
 
     return

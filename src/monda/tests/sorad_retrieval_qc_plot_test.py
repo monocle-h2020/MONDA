@@ -50,10 +50,7 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import sys
 import os
 import numpy as np
-#from monda.sorad import access, plots, qc
-sys.path.append('/users/rsg-new/tjor/TaraOcean/monda/MONDA/src/monda/sorad') # standard (non-diffuse) implementation of 3C using latest 2021 version of git repo
-import access, plots, qc
-import monda.sorad
+from monda.sorad import access, plots, qc
 import datetime
 import logging
 import pandas as pd
@@ -66,15 +63,15 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def run_example(platform_id = 'PML_SR002',
-                start_time = datetime.datetime(2023,9,5,0,0),
-                end_time = datetime.datetime(2023,9,5,23,59,59),
+def run_example(platform_id = 'PML_SR004',
+                start_time = datetime.datetime(2021,10,21,0,0,0),
+                end_time   = datetime.datetime(2021,10,22,23,59,59),
                 bbox = None,
-                target='Tara_output', rrsalgorithm='3c',
-                output_radiance = True,
-                output_metadata = True,
-                output_rrs = True,
-                output_plots = True):
+                target='.', rrsalgorithm='fp',
+                output_radiance = False,
+                output_metadata = False,
+                output_rrs = False,
+                output_plots = False):
 
     """
     Download data from a specific So-Rad platform processed to Rrs using the Fingerprint (fp) or 3C (3c) algorithm.
@@ -143,8 +140,7 @@ def run_example(platform_id = 'PML_SR002',
         q_lt_ed = qc.qc_lt_ed_filter(ed, lt, time, wl_output, threshold = 0.020) # lt/Ed ratio (glint) filtering
         q_ed =    qc.qc_ed_filter(ed, min_ed_threshold = 500) # filters on ed and ls anomalies
         q_ls =    qc.qc_ls_filter(ls, wl_output, threshold = 1)
-        q_rad =   qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls) # combined `radiometric' qc mask##
-        
+        q_rad =   qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls) # combined `radiometric' qc mask
 
         # Step (ii)  addtional qc metrics that apply to Rrs spectrum
         q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum
@@ -180,9 +176,7 @@ def run_example(platform_id = 'PML_SR002',
             log.info("Creating Rrs plots")
             plots.plot_rrs_qc_3c(rrs, time, rrswl, q_rad, q_rad_3c, q_rad_rrs, file_id, target)
             plots.plot_coveragemap(lat, lon, q_rad_3c, file_id, target, map_resolution = 11)
-            plots.plot_coveragemap_total(lat, lon, q_rad_3c, file_id, target, map_resolution = 8)
-            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_3c, file_id, target)
-          #  plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
+            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
 
 
         d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
@@ -280,12 +274,12 @@ def parse_args():
     """Interpret command line arguments"""
     parser = argparse.ArgumentParser()
     parser.add_argument('-a','--algorithm',   required = False, type=str, default = 'fp', help = "rrs processing algorithm: fp or 3c")
-    parser.add_argument('-p','--platform',    required = False, type = str, default = 'PML_SR002', help = "Platform serial number, e.g. PML_SR004.")
+    parser.add_argument('-p','--platform',    required = False, type = str, default = 'PML_SR004', help = "Platform serial number, e.g. PML_SR004.")
     parser.add_argument('-i','--start_time',  required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
-                                              default = datetime.datetime(2023,3,24,0,0,0),
+                                              default = datetime.datetime(2021,10,21,0,0,0),
                                               help = "Initial UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
     parser.add_argument('-e','--end_time',    required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
-                                              default = datetime.datetime(2023,4,24,23,59,59),
+                                              default = datetime.datetime(2021,10,22,23,59,59),
                                               help = "Final UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
     parser.add_argument('-b','--bbox',        required = False, type = float, nargs='+', default = None, help = "Restrict query to bounding box format [corner1lat corner1lon corner2lat corner2lon]")
     parser.add_argument('-t','--target',      required = False, type = str, default=None,
@@ -313,7 +307,5 @@ if __name__ == '__main__':
     if not os.path.isdir(args.target):
         os.mkdir(args.target)
 
-    # response = run_example(args.platform, args.start_time, args.end_time, args.bbox, args.target, args.algorithm.lower(),
-    # args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots)
-
-    response = run_example()
+    response = run_example(args.platform, args.start_time, args.end_time, args.bbox, args.target, args.algorithm.lower(),
+                           args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots)
