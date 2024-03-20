@@ -44,7 +44,7 @@ def percentile_amplitude(values):
 def outlier_limit(values):
     "determine outlier amplitude to limit y axis range limit"
     values = values[np.isfinite(values)]
-    values = values[values>=0.0]
+    values = values[values> = 0.0]
     outlier_limit = np.median(values) + 1.5 * np.std(values)
     ylimit = np.max(values[values<outlier_limit])
     return ylimit
@@ -193,38 +193,39 @@ def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
     return
 
 
-def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=11):
+def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
     """ coverage map showing quality control filtered data: color scheme matches
     `results' plot"""
     if np.sum(q) > 0:
         colors= cm.cool(np.linspace(0, 1, int(sum(q))))
 
         plt.figure(figsize=(15,10))
-        extent = [np.floor(np.min(lon*100))/100, np.ceil(np.max(lon*100))/100, np.floor(np.min(lat*100))/100, np.ceil(np.max(lat*100))/100]
-        request = cimgt.StamenTerrain()
+        extent = [np.floor(np.min(lon*10))/10, np.ceil(np.max(lon*10))/10, np.floor(np.min(lat*10))/10, np.ceil(np.max(lat*10))/10]
+        request =  cimgt.GoogleTiles(style='satellite')
         ax = plt.axes(projection=ccrs.PlateCarree())
-        ax.add_image(request, map_resolution)
+        ax.add_image(request, 10)
         ax.set_extent(extent, ccrs.PlateCarree())
         gl = ax.gridlines(draw_labels=True)
         gl.top_labels_top = gl.right_labels = False
         gl.xformatter =  LONGITUDE_FORMATTER
         gl.yformatter =  LATITUDE_FORMATTER
-        gl.xlabel_style = {'size': 12,  'rotation':45}
+        gl.xlabel_style = {'size': 12,  'rotation': 45}
         gl.ylabel_style = {'size': 12,  'rotation': 0}
-
+        
         lon_formatter = LongitudeFormatter(zero_direction_label=True)
         lat_formatter = LatitudeFormatter()
         ax.xaxis.set_major_formatter(lon_formatter)
         ax.tick_params(labelsize=10)
-        plt.scatter(lon,lat,s=8,color='gray',transform=ccrs.PlateCarree(), label='Failed QC')
-        plt.scatter(lon[q==1][0],lat[q==1][0],s=15,color=colors[0],transform=ccrs.PlateCarree(),label='Passed QC')
+        plt.scatter(lon,lat,s=8,color='gray',transform=ccrs.PlateCarree())
+        plt.scatter(lon[q==1][0],lat[q==1][0],s=15,color=colors[0],transform=ccrs.PlateCarree())
         for i in range(int(sum(q))):
             plt.scatter(lon[q==1][i],lat[q==1][i],s=15,color=colors[i],transform=ccrs.PlateCarree())
-
+        
         plt.rc('font', size=14)
         plt.title(str(file_id))
         plt.legend()
 
+       # breakpoint()
         plt.savefig(os.path.join(target, file_id + '_coverage-map.png'), format='png', dpi=150)
 
     return
