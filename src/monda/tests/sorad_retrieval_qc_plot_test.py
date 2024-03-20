@@ -50,7 +50,12 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import sys
 import os
 import numpy as np
-from monda.sorad import access, plots, qc
+#from monda.sorad import access, plots, qc
+sys.path.append('/users/rsg-new/tjor/Sorad_mondademos/monda/MONDA/src/monda/sorad') 
+import qc
+import plots
+import access
+
 import datetime
 import logging
 import pandas as pd
@@ -63,15 +68,15 @@ formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
-def run_example(platform_id = 'PML_SR004',
-                start_time = datetime.datetime(2021,10,21,0,0,0),
-                end_time   = datetime.datetime(2021,10,22,23,59,59),
+def run_example(platform_id = 'PML_SR001',
+                start_time = datetime.datetime(2023,10,1,0,0,0),
+                end_time   = datetime.datetime(2023,10,2,23,59,59),
                 bbox = None,
-                target='.', rrsalgorithm='fp',
-                output_radiance = False,
-                output_metadata = False,
-                output_rrs = False,
-                output_plots = False):
+                target='.', rrsalgorithm='3c',
+                output_radiance = True,
+                output_metadata = True,
+                output_rrs = True,
+                output_plots = True):
 
     """
     Download data from a specific So-Rad platform processed to Rrs using the Fingerprint (fp) or 3C (3c) algorithm.
@@ -307,5 +312,7 @@ if __name__ == '__main__':
     if not os.path.isdir(args.target):
         os.mkdir(args.target)
 
-    response = run_example(args.platform, args.start_time, args.end_time, args.bbox, args.target, args.algorithm.lower(),
-                           args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots)
+    # response = run_example(args.platform, args.start_time, args.end_time, args.bbox, args.target, args.algorithm.lower(),  # use if running in terminal
+    #                       args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots)
+
+    response = run_example() # use if
