@@ -44,7 +44,7 @@ def percentile_amplitude(values):
 def outlier_limit(values):
     "determine outlier amplitude to limit y axis range limit"
     values = values[np.isfinite(values)]
-    values = values[values> = 0.0]
+    values = values[values>= 0.0]
     outlier_limit = np.median(values) + 1.5 * np.std(values)
     ylimit = np.max(values[values<outlier_limit])
     return ylimit
