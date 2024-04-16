@@ -71,8 +71,8 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
 def run_example(platform_id = 'PML_SR001',
-                start_time = datetime.datetime(2024,4,1,0,0,0),
-                end_time   = datetime.datetime(2024,4,16,23,59,59),
+                start_time = datetime.datetime(2023,10,3,0,0,0),
+                end_time   = datetime.datetime(2023,10,3,23,59,59),
                 bbox = None,
                 target='.', rrsalgorithm='3c',
                 output_radiance = True,
@@ -142,15 +142,16 @@ def run_example(platform_id = 'PML_SR001',
             log.info("Creating (ir)radiance plots")
             plots.plot_ed_ls_lt(ed, ls, lt, time, wl_output, file_id, target)
 
-        # Step (0) QC filters based on relative aziumuth and tilt
-        
-      
-
+        # Step (0) QC filters based on relative aziumuth and tilt/tilt std
+        q_az =  qc.rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 170)
+        q_tilt, q_tilt_std =  qc.tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = np.sqrt(3))
+        q_0 =  qc.combined_filter(q_az , qc.combined_filter(q_tilt, q_tilt_std))
+   
         # Step (i) radiometric quality control filters (i.e. QC applied to l or e spectra)
         q_lt_ed = qc.qc_lt_ed_filter(ed, lt, time, wl_output, threshold = 0.020) # lt/Ed ratio (glint) filtering
         q_ed =    qc.qc_ed_filter(ed, min_ed_threshold = 500) # filters on ed and ls anomalies
         q_ls =    qc.qc_ls_filter(ls, wl_output, threshold = 1)
-        q_rad =   qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls) # combined `radiometric' qc mask
+        q_1 =     qc.combined_filter(qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls), q_0) # combined `radiometric' qc mask - inlcludes data passing step(0)
 
 
         # Step (ii): (3c) algorithmic qc filters specfic to 3C (rmsd or termination at rho bounds)
@@ -159,36 +160,36 @@ def run_example(platform_id = 'PML_SR001',
             rho_ds =      np.array([response['result'][i]['c3_rho_ds'] for i in range(len(response['result']))]) # rho factors
             rho_dd =      np.array([response['result'][i]['c3_rho_dd'] for i in range(len(response['result']))])
             rho_s =       np.array([response['result'][i]['c3_rho_s'] for i in range(len(response['result']))])
-            q_rho =       qc.qc_3c_rho_filter(rho_ds, rho_dd, rho_s, upperbound = 0.1)
-            q_rad_resid = qc.qc_3cresidual(q_rad, rmsd_3c, tol = 1.5)
-            q_rad_3c =    qc.combined_filter(q_rho, q_rad_resid)
+            q_rho =       qc.qc_3c_rho_filter(rho_ds, rho_dd, rho_s, upperbound = 0.1) # removes data where rho terminates at optimization bounds
+            q_1_resid = qc.qc_3cresidual(q_1, rmsd_3c, tol = 1.5) # removes data where residual parameter is above threshold standard-deivation multiple
+            q_2 =    qc.combined_filter(q_rho, q_1_resid)
 
         # Step (iii):  addtional qc metrics that apply to Rrs spectrum
-        q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum
+        q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum filter
         q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
         q_min =       qc.qc_rrs_min(rrs, rrswl)
         
-        # Examples of optional filters
+        # Optional filters
         # q_coastal = qc_coastalwater_rrsfilter(rrs, wl) #  filter based on expected shape of rrs - example from Warren 2019 used. users can input their own spectra here (will depend on water type)
         # q_var = qc_radiometric_variability(ed, lt, ls, time, wl, windowlength = 60, var_threshold =1.1, var_metric = 'zscore_max')
 
         if rrsalgorithm == '3c':
-            q_rad_rrs = qc.combined_filter(q_rad_3c, qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for 3C method (combines step (i), (ii) and (iii) QC)
+            q_3 = qc.combined_filter(q_2, qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for 3C method (combines step (i), (ii) and (iii) QC)
         elif rrsalgorithm == 'fp':
-            q_rad_rrs = qc.combined_filter(q_rad,    qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for FP method (combines step (i) and (iii) QC)
+            q_3 = qc.combined_filter(q_1,    qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for FP method (combines step (i) and (iii) QC)
 
 
         if output_plots and rrsalgorithm == 'fp':
             log.info("Creating Rrs plots")
-            plots.plot_rrs_qc_fp(rrs, time, rrswl, q_rad, q_rad_rrs,              file_id, target)
-            plots.plot_coveragemap(lat, lon, q_rad, file_id, target, map_resolution = 11)
-            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
+            plots.plot_rrs_qc_fp(rrs, time, rrswl, q_1, q_3, file_id, target)
+            plots.plot_coveragemap(lat, lon, q_3, file_id, target, map_resolution = 11)
+            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_3, file_id, target)
 
         elif output_plots and rrsalgorithm == '3c':
             log.info("Creating Rrs plots")
-            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_rad, q_rad_3c, q_rad_rrs, file_id, target)
-            plots.plot_coveragemap(lat, lon, q_rad_3c, file_id, target, map_resolution = 11)
-            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_rad_rrs, file_id, target)
+            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_1, q_2, q_3, file_id, target)
+            plots.plot_coveragemap(lat, lon, q_3, file_id, target, map_resolution = 11)
+            plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_3, file_id, target)
 
 
         d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
@@ -202,14 +203,15 @@ def run_example(platform_id = 'PML_SR001',
         d['tilt_avg'] = tilt_avgs
         d['tilt_std'] = tilt_stds
         d['rel_view_az '] = rel_view_az
-        d['q_1'] = q_rad     # Mask after step (i) QC
+        d['q_0'] = q_0     # Mask after step (i) QC
+        d['q_1'] = q_1     # Mask after step (i) QC
 
         if rrsalgorithm == 'fp':
-            d['q_2'] = q_rad_rrs # Mask after step (ii) QC. Currently recommended for FP rrs data analysis
+            d['q_3'] = q_3 # Mask after step (iii) QC: currently recommended for FP rrs data analysis
 
         elif rrsalgorithm == '3c':
-            d['q_2'] = q_rad_3c   # Mask after step (ii) QC
-            d['q_3'] = q_rad_rrs  # Mask after step (iii) QC: currently recommended for 3C  rrs data analysis
+            d['q_2'] = q_2   # Mask after step (ii) QC (only applies to 3C)
+            d['q_3'] = q_3  # Mask after step (iii) QC: currently recommended for 3C  rrs data analysis
 
         # optional to output all qc masks
         # q_keys = [i for i in locals() if i.startswith('q_')]

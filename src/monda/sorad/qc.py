@@ -15,6 +15,7 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import numpy as np
 import datetime
 import pandas as pd
+from statistics import mode
 
 
 # sub routines
@@ -43,7 +44,38 @@ def nearest(items, pivot):
      return nearest_value, nearest_index
 
 
-# Filters used in QC of l and e spectra (Step 1 in 3C and FP chain)
+# Filters used in Step (0) QC (based on tilt and relative azimuth)
+def rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 170):
+    """ Function to test that So-Rad relative viewing azimiuth is within given angular bounds. 
+    The default lower (110 deg) and upper (170 deg) bounds are based on the AMT cruise defaults"""    
+
+    q_lower =  ~ np.isnan(np.where(np.abs(rel_view_az) < 170, rel_view_az, np.nan))
+    q_upper =  ~ np.isnan(np.where(np.abs(rel_view_az) > 110, rel_view_az, np.nan))
+    q_az =  np.logical_and(q_lower, q_upper)
+    q_az =  np.ravel(q_az.astype(int))
+
+    return q_az
+
+def tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = np.sqrt(3)):
+    """ Applies upper thresholds to allowed tilt and tilt-standard-deviation values (degs) """
+
+
+    mode_tilt_avgs = mode(tilt_avgs)   # test for constant values  
+    numberstuck = len(tilt_avgs[mode_tilt_avgs == tilt_avgs])
+       
+    if numberstuck > 1:
+        print('Tilt sensor was stuck on single value: do not apply tilt filter')
+        q_tilt_avgs = np.ones(len((tilt_avgs)))
+        q_tilt_stds = np.ones(len((tilt_stds)))
+    else:
+        q_tilt_avgs = ~ np.isnan(np.where(tilt_avgs < upper_tilt_bound, tilt_avgs, np.nan))
+        q_tilt_stds = ~ np.isnan(np.where(tilt_stds < upper_tilt_std_bound, tilt_stds, np.nan))
+        
+
+    return q_tilt_avgs, q_tilt_stds
+
+
+# Filters used in QC of l and e spectra (Step (i) in 3C and FP chain)
 def qc_lt_ed_filter(ed, lt, time, wl, threshold = 0.020):
     """Funtion to filter by lt_ed ratio in NIR: basic implementation using absolute threshold defined in sr^-1 on [850, 950] nm"""
 
@@ -84,7 +116,7 @@ def qc_ls_filter(ls, wl, threshold = 1):
     return q_ls
 
 
-# 3C-specific filtering (step 2 in 3C QC chain)
+# 3C-specific filtering (step (ii) in 3C QC chain)
 def qc_3cresidual(q_rad,resid,tol = 3):
     """3C residual fliter based on standard deviation of daily rmsd ditribution that has
        already passed radiometric quality control. tol is a standard deviation multiple
@@ -111,7 +143,7 @@ def qc_3c_rho_filter(rho_ds, rho_dd, rho_s, upperbound = 0.1):
     return q_rho3c
 
 
-# filters used in qc of Rrs spectra: Step 3 in 3C chain and 2 in FP chain)
+# filters used in qc of Rrs spectra: Step (iii) in 3C and FP QC chains
 def qc_SS_NIR_filter(wl, rrs, upperthreshold = 3, lowerthreshold = 0.5):
     """Filter based on NIR similarity spectrum (reflectance ratio of 779 and 865 nm) in Ruddick et al. 2006."""
 
@@ -140,7 +172,7 @@ def qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.0):
 
 
 def qc_rrs_min(rrs, wl):
-    """ Replicates filtering step in FP processing that Rrs must be > 0 on [370,700] nm
+    """ Replicates filtering step in FP processing that Rrs must be > 0 on [370, 700] nm
     but applied to Rrs with offset included"""
 
     q_min = np.ones(len(rrs))
