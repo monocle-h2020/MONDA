@@ -187,7 +187,7 @@ def run_example(platform_id = 'PML_SR001',
 
         elif output_plots and rrsalgorithm == '3c':
             log.info("Creating Rrs plots")
-            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_1, q_2, q_3, file_id, target)
+            plots.plot_rrs_qc_3c(rrs, time, rrswl, q_0, q_1, q_2, q_3, file_id, target)
             plots.plot_coveragemap(lat, lon, q_3, file_id, target, map_resolution = 11)
             plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_3, file_id, target)
 
@@ -203,7 +203,7 @@ def run_example(platform_id = 'PML_SR001',
         d['tilt_avg'] = tilt_avgs
         d['tilt_std'] = tilt_stds
         d['rel_view_az '] = rel_view_az
-        d['q_0'] = q_0     # Mask after step (i) QC
+        d['q_0'] = q_0     # Mask after step (0) QC
         d['q_1'] = q_1     # Mask after step (i) QC
 
         if rrsalgorithm == 'fp':

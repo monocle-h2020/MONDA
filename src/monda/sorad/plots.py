@@ -151,46 +151,127 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
     return
 
 
-def plot_rrs_qc_fp(rrs, time, wl, q_1, q_2, file_id, target):
+def plot_rrs_qc_3c(rrs, time, wl, q_0, q_1, q_2, q_3, file_id, target):
     """ rrs plot function showing sequential quality control filters"""
 
-    if np.sum(q_2) > 0:
+    if np.sum(q_3) > 0:
         plt.figure()
-        plt.figure(figsize=(12, 8))
+        plt.figure(figsize=(18,8))
         plt.suptitle(str(file_id))
 
-        ymax = np.ceil(np.nanmax(rrs.T[:,q_2==1]*1000))/1000;
+        ymax = np.ceil(np.nanmax(rrs.T[:,q_3==1]*1000))/1000;
 
-        plt.subplot(2, 2, 1)
-        plt.title(f"No QC (n = {int(len(q_1))})")
+        plt.subplot(2, 3, 1)
+        plt.title(f"No QC (n = {int(len(q_0))})")
         plt.plot(wl, rrs.T, linewidth=0.4, alpha=0.6)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        #plt.grid()
+        plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$ [sr$^{-1}$]')
 
-        plt.subplot(2, 2, 2)
-        plt.title(f"Rad QC (n = {int(np.sum(q_1))})")
-        plt.plot(wl, rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
+        plt.subplot(2, 3, 2)
+        plt.title(f"$q_{0}$ (n = {int(np.sum(q_0))})")
+        plt.plot(wl, rrs.T[:,q_0==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        #plt.grid()
+        plt.grid()
         plt.xlabel('Wavelength [nm]')
 
-        plt.subplot(2, 2, 3)
-        plt.title(f"Rad + Rrs QC (n = {int(np.sum(q_2))})")
-        plt.plot(wl, rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
+        plt.subplot(2, 3, 3)
+        plt.title(f"$q_{1}$ (n = {int(np.sum(q_1))})")
+        plt.plot(wl,rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
         plt.xlim(350, 950)
         plt.ylim(-0.002, ymax) # force axis limits
-        #plt.grid()
+        plt.grid()
+        plt.xlabel('Wavelength [nm]')
+        plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
+
+        plt.subplot(2, 3, 4)
+        plt.title(f"$q_{2}$ (n = {int(np.sum(q_2))})")
+        plt.plot(wl,rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        plt.grid()
+        plt.xlabel('Wavelength [nm]')
+        
+        plt.subplot(2, 3, 5)
+        plt.title(f"$q_{3}$ (n = {int(np.sum(q_3))})")
+        plt.plot(wl,rrs.T[:,q_3==1], linewidth=0.4, alpha=0.8)
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        plt.grid()
         plt.xlabel('Wavelength [nm]')
 
+        plt.tight_layout()
         plt.subplots_adjust(hspace=0.5)
 
         plt.savefig(os.path.join(target, file_id + '_Rrs_QC.png'), format='png', dpi=150)
 
     return
+
+
+def plot_rrs_qc_fp(rrs, time, wl, q_0, q_1, q_3, file_id, target):
+    """ rrs plot function showing sequential quality control filters"""
+
+    if np.sum(q_3) > 0:
+        plt.figure()
+        plt.figure(figsize=(18,8))
+        plt.suptitle(str(file_id))
+
+        ymax = np.ceil(np.nanmax(rrs.T[:,q_3==1]*1000))/1000;
+
+        plt.subplot(2, 2, 1)
+        plt.title(f"No QC (n = {int(len(q_0))})")
+        plt.plot(wl, rrs.T, linewidth=0.4, alpha=0.6)
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        plt.grid()
+        plt.xlabel('Wavelength [nm]')
+        plt.ylabel('$R_{rs}$ [sr$^{-1}$]')
+
+        plt.subplot(2, 2, 2)
+        plt.title(f"$q_{0}$ (n = {int(np.sum(q_0))})")
+        plt.plot(wl, rrs.T[:,q_0==1], linewidth=0.4, alpha=0.8)
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        plt.grid()
+        plt.xlabel('Wavelength [nm]')
+
+        plt.subplot(2, 2, 3)
+        plt.title(f"$q_{1}$ (n = {int(np.sum(q_1))})")
+        plt.plot(wl,rrs.T[:,q_1==1], linewidth=0.4, alpha=0.8)
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        plt.grid()
+        plt.xlabel('Wavelength [nm]')
+
+       # plt.subplot(2, 3, 4)
+        #plt.title(f"$q_{2}$ (n = {int(np.sum(q_2))})")
+        #plt.plot(wl,rrs.T[:,q_2==1], linewidth=0.4, alpha=0.8)
+        #plt.xlim(350, 950)
+        #plt.ylim(-0.002, ymax) # force axis limits
+        #plt.grid()
+        #plt.xlabel('Wavelength [nm]')
+        
+        plt.subplot(2, 2, 4)
+        plt.title(f"$q_{3}$ (n = {int(np.sum(q_3))})")
+        plt.plot(wl,rrs.T[:,q_3==1], linewidth=0.4, alpha=0.8)
+        plt.xlim(350, 950)
+        plt.ylim(-0.002, ymax) # force axis limits
+        plt.grid()
+        plt.xlabel('Wavelength [nm]')
+        plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
+
+
+        plt.tight_layout()
+        plt.subplots_adjust(hspace=0.5)
+
+        plt.savefig(os.path.join(target, file_id + '_Rrs_QC.png'), format='png', dpi=150)
+
+    return
+
+
 
 
 def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
@@ -259,8 +340,8 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
             plt.plot_date(timestamp[q==1][i], np.pi*ls_ed_400[q==1][i], color=colors[i,:], ms=3)
 
         plt.ylim(0, 1.6)
-        plt.legend()
-        #plt.grid()
+        #plt.legend()
+        plt.grid()
         plt.xlabel('UTC time [hrs]')
 
         plt.subplot(2,1,2)
@@ -269,13 +350,14 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
         for i in range(int(sum(q))):
             plt.plot(rrswl, rrs[q==1][i,:], color=colors[i,:], linewidth=0.6, alpha=0.6)
 
-        plt.plot(rrswl, np.nanmean(rrs[q==1], axis=0), color='black', linewidth=2, alpha=1, label='Mean spectrum')
+        plt.plot(rrswl, np.nanmedian(rrs[q==1], axis=0), color='black', linewidth=2, alpha=1, label='Median spectrum')
         plt.xlim(350, 900)
         plt.gca().set_ylim(bottom =-0.001)
-        #plt.grid()
+        plt.grid()
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$  [sr$^{-1}$]')
         plt.legend()
+     
 
         plt.savefig(os.path.join(target, file_id + '_results.png'), format='png', dpi=150)
 
