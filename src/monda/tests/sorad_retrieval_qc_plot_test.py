@@ -142,6 +142,9 @@ def run_example(platform_id = 'PML_SR001',
             log.info("Creating (ir)radiance plots")
             plots.plot_ed_ls_lt(ed, ls, lt, time, wl_output, file_id, target)
 
+        # Step (0) QC filters based on relative aziumuth and tilt
+        
+      
 
         # Step (i) radiometric quality control filters (i.e. QC applied to l or e spectra)
         q_lt_ed = qc.qc_lt_ed_filter(ed, lt, time, wl_output, threshold = 0.020) # lt/Ed ratio (glint) filtering
@@ -149,12 +152,8 @@ def run_example(platform_id = 'PML_SR001',
         q_ls =    qc.qc_ls_filter(ls, wl_output, threshold = 1)
         q_rad =   qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls) # combined `radiometric' qc mask
 
-        # Step (ii)  addtional qc metrics that apply to Rrs spectrum
-        q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum
-        q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
-        q_min =       qc.qc_rrs_min(rrs, rrswl)
 
-        # (3c) algorithmic qc filters specfic to 3C (rmsd or termination at rho bounds)
+        # Step (ii): (3c) algorithmic qc filters specfic to 3C (rmsd or termination at rho bounds)
         if rrsalgorithm == '3c':
             rmsd_3c =     np.array([response['result'][i]['c3_rmsd'] for i in range(len(response['result']))]) # rmsd values used in 3C residual filter
             rho_ds =      np.array([response['result'][i]['c3_rho_ds'] for i in range(len(response['result']))]) # rho factors
@@ -164,14 +163,20 @@ def run_example(platform_id = 'PML_SR001',
             q_rad_resid = qc.qc_3cresidual(q_rad, rmsd_3c, tol = 1.5)
             q_rad_3c =    qc.combined_filter(q_rho, q_rad_resid)
 
+        # Step (iii):  addtional qc metrics that apply to Rrs spectrum
+        q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum
+        q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
+        q_min =       qc.qc_rrs_min(rrs, rrswl)
+        
+        # Examples of optional filters
+        # q_coastal = qc_coastalwater_rrsfilter(rrs, wl) #  filter based on expected shape of rrs - example from Warren 2019 used. users can input their own spectra here (will depend on water type)
+        # q_var = qc_radiometric_variability(ed, lt, ls, time, wl, windowlength = 60, var_threshold =1.1, var_metric = 'zscore_max')
+
         if rrsalgorithm == '3c':
             q_rad_rrs = qc.combined_filter(q_rad_3c, qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for 3C method (combines step (i), (ii) and (iii) QC)
         elif rrsalgorithm == 'fp':
-            q_rad_rrs = qc.combined_filter(q_rad,    qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for FP method (combines step (i) and (ii) QC)
+            q_rad_rrs = qc.combined_filter(q_rad,    qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for FP method (combines step (i) and (iii) QC)
 
-        # Optional filters
-        # q_coastal = qc_coastalwater_rrsfilter(rrs, wl) #  filter based on expected shape of rrs - example from Warren 2019 used. users can input their own spectra here (will depend on water type)
-        # q_var = qc_radiometric_variability(ed, lt, ls, time, wl, windowlength = 60, var_threshold =1.1, var_metric = 'zscore_max')
 
         if output_plots and rrsalgorithm == 'fp':
             log.info("Creating Rrs plots")
