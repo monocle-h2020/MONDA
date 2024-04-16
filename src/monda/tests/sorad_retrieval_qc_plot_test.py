@@ -45,14 +45,16 @@ Optional filters (commented out below):
 ------------------------------------------------------------------------------
 
 Tom Jordan - tjor@pml.ac.uk - Feb 2022
+                            - Spring 2024
 """
 
 import sys
 import os
 import numpy as np
-#from monda.sorad import access, plots, qc
-sys.path.append('/users/rsg-new/tjor/Sorad_mondademos/monda/MONDA/src/monda/sorad') 
-import qc
+#from monda.sorad import access, plots, qc # note QC import does not work via monda (also issues in ADIAS)
+sys.path.append('/users/rsg/tjor/Sorad_mondademos/MONDA/src/monda/sorad')  # for 2024 changes, I have used a local import as
+
+import qc 
 import plots
 import access
 
@@ -69,8 +71,8 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
 def run_example(platform_id = 'PML_SR001',
-                start_time = datetime.datetime(2023,10,1,0,0,0),
-                end_time   = datetime.datetime(2023,10,2,23,59,59),
+                start_time = datetime.datetime(2024,4,1,0,0,0),
+                end_time   = datetime.datetime(2024,4,16,23,59,59),
                 bbox = None,
                 target='.', rrsalgorithm='3c',
                 output_radiance = True,
@@ -253,7 +255,7 @@ def unpack_response(response, rrsalgorithm, wl_out):
     sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
     platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
     platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
-    gps_speed     = np.array([response['result'][i]['id'] for i in range(len(response['result']))])
+    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
     tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
     tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
 
