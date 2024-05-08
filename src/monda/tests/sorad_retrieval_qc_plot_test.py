@@ -28,6 +28,7 @@ An optional bounding box is specified providing four space-separated coordinates
 -------------------------------------------------------------------------------
 
 Default quality control chain for 3C:
+       (0)   Filters based on relative azimuth and tilt angle
        (i)   Radiometric filtering (lt/ed glint filter, ed and ls anomaly filters)
        (ii)  Algorithmic filtering (3c residual and termination of rho_dd, rho_ds, or rho_ds at optimizion bounds)
        (iii) Rrs-based filtering (similarity spectrum, and filter based on range of Rrs)
@@ -71,8 +72,8 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
 def run_example(platform_id = 'PML_SR001',
-                start_time = datetime.datetime(2023,10,3,0,0,0),
-                end_time   = datetime.datetime(2023,10,3,23,59,59),
+                start_time = datetime.datetime(2022,8,10,0,0,0),
+                end_time   = datetime.datetime(2022,10,30,23,59,59),
                 bbox = None,
                 target='.', rrsalgorithm='3c',
                 output_radiance = True,
@@ -125,12 +126,11 @@ def run_example(platform_id = 'PML_SR001',
                                   timewindow = (datetime_i, datetime_e),
                                   layer=layer, bbox=bbox)
 
-
         log.info(f"{response['length']} features received.")
 
         if response['length'] == 0:
             continue
-
+    
         file_id = f"{datetime_i.strftime('%Y-%m-%d')}_{rrsalgorithm.upper()}"   # labelling for output data files and plots
 
         rrswl, time, lat, lon, rel_view_az,\
@@ -152,7 +152,6 @@ def run_example(platform_id = 'PML_SR001',
         q_ed =    qc.qc_ed_filter(ed, min_ed_threshold = 500) # filters on ed and ls anomalies
         q_ls =    qc.qc_ls_filter(ls, wl_output, threshold = 1)
         q_1 =     qc.combined_filter(qc.combined_filter(qc.combined_filter(q_lt_ed, q_ed), q_ls), q_0) # combined `radiometric' qc mask - inlcludes data passing step(0)
-
 
         # Step (ii): (3c) algorithmic qc filters specfic to 3C (rmsd or termination at rho bounds)
         if rrsalgorithm == '3c':

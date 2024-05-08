@@ -134,7 +134,7 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         plt.ylim(-0.002, ymax) # force axis limits
         #plt.grid()
         plt.xlabel('Wavelength [nm]')
-        plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
+    
 
         plt.subplot(2, 2, 4)
         plt.title(f"Rad. + 3C + Rrs QC (n = {int(np.sum(q_3))})")
@@ -143,6 +143,7 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
         plt.ylim(-0.002, ymax) # force axis limits
         #plt.grid()
         plt.xlabel('Wavelength [nm]')
+        plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
 
         plt.subplots_adjust(hspace=0.5)
 
