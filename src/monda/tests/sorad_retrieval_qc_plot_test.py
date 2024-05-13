@@ -136,7 +136,7 @@ def run_example(platform_id = 'PML_SR001',
         rrswl, time, lat, lon, rel_view_az,\
                ed, ls, lt, rrs,\
                sample_uuids, platform_ids, platform_uuids,\
-               gps_speeds, tilt_avgs, tilt_stds = unpack_response(response, rrsalgorithm, wl_output)
+               gps_speeds, tilt_avgs, tilt_stds = access.unpack_response(response, rrsalgorithm, wl_output)
 
         if output_plots:
             log.info("Creating (ir)radiance plots")
@@ -175,7 +175,7 @@ def run_example(platform_id = 'PML_SR001',
         if rrsalgorithm == '3c':
             q_3 = qc.combined_filter(q_2, qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for 3C method (combines step (i), (ii) and (iii) QC)
         elif rrsalgorithm == 'fp':
-            q_3 = qc.combined_filter(q_1,    qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for FP method (combines step (i) and (iii) QC)
+            q_3 = qc.combined_filter(q_1, qc.combined_filter(q_min, (qc.combined_filter(q_ss, q_maxrange)))) # recommended rrs qc mask for FP method (combines step (i) and (iii) QC)
 
 
         if output_plots and rrsalgorithm == 'fp':
@@ -248,39 +248,39 @@ def run_example(platform_id = 'PML_SR001',
     return response
 
 
-def unpack_response(response, rrsalgorithm, wl_out):
-    """
-    Unpack the WFS response
-    """
+#def unpack_response(response, rrsalgorithm, wl_out):
+ #   """
+  #  Unpack the WFS response
+    #"""
     #log.info(response['result'][0].keys())   # uncomment to show all available fields
 
-    time          = [response['result'][i]['time'] for i in range(len(response['result']))]
-    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
-    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
-    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
-    sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
-    platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
-    platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
-    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
-    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
-    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+    #time          = [response['result'][i]['time'] for i in range(len(response['result']))]
+    #lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+    #lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+    #rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    #sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
+    #platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
+    #platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
+    #gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
+    #tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+    #tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
 
-    ed = access.get_l1spectra(response, 'ed_', wl_out) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
-    ls = access.get_l1spectra(response, 'ls_', wl_out)
-    lt = access.get_l1spectra(response, 'lt_', wl_out)
+    #ed = access.get_l1spectra(response, 'ed_', wl_out) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
+    #ls = access.get_l1spectra(response, 'ls_', wl_out)
+   # lt = access.get_l1spectra(response, 'lt_', wl_out)
 
 
-    if rrsalgorithm == '3c':
-        rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
-        rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
+  #  if rrsalgorithm == '3c':
+ #       rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
+#        rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
 
-    elif rrsalgorithm == 'fp':
-        rrswl  = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
-        rrs_    = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))])  # rrs spectra 2D matrix format: rows time index, columns wavelength
-        offset = np.array([response['result'][i]['nir_offset'] for i in range(len(response['result']))])
-        rrs = np.array([rrs_[i,:] - np.ones(len(rrswl))*offset[i] for i in range(len(rrs_))]) # spectral offset (applied as default definition of FP rrs)
-
-    return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
+   # elif rrsalgorithm == 'fp':
+   #     rrswl  = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
+  #      rrs_    = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))])  # rrs spectra 2D matrix format: rows time index, columns wavelength
+  #      offset = np.array([response['result'][i]['nir_offset'] for i in range(len(response['result']))])
+  #      rrs = np.array([rrs_[i,:] - np.ones(len(rrswl))*offset[i] for i in range(len(rrs_))]) # spectral offset (applied as default definition of FP rrs)
+#
+  #  return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
 
 
 def parse_args():
