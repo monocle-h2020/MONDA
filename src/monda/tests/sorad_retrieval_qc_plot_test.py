@@ -72,8 +72,8 @@ logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 
 def run_example(platform_id = 'PML_SR001',
-                start_time = datetime.datetime(2022,8,10,0,0,0),
-                end_time   = datetime.datetime(2022,10,30,23,59,59),
+                start_time = datetime.datetime(2023,10,10,0,0,0),
+                end_time   = datetime.datetime(2023,10,10,23,59,59),
                 bbox = None,
                 target='.', rrsalgorithm='3c',
                 output_radiance = True,
@@ -162,7 +162,9 @@ def run_example(platform_id = 'PML_SR001',
             q_rho =       qc.qc_3c_rho_filter(rho_ds, rho_dd, rho_s, upperbound = 0.1) # removes data where rho terminates at optimization bounds
             q_1_resid = qc.qc_3cresidual(q_1, rmsd_3c, tol = 1.5) # removes data where residual parameter is above threshold standard-deivation multiple
             q_2 =    qc.combined_filter(q_rho, q_1_resid)
-
+        elif rrsalgorithm == 'fp':
+            q_2 = np.nan*np.ones(len(q_1)) # q2 stored as NaN for fp
+           
         # Step (iii):  addtional qc metrics that apply to Rrs spectrum
         q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum filter
         q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
@@ -190,32 +192,7 @@ def run_example(platform_id = 'PML_SR001',
             plots.plot_coveragemap(lat, lon, q_3, file_id, target, map_resolution = 11)
             plots.plot_results(ed, ls, wl_output, rrs, rrswl, time, q_3, file_id, target)
 
-
-        d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
-        d['sample_uuid'] = sample_uuids
-        d['platform_id'] = platform_ids
-        d['platform_uuid'] = platform_uuids
-        d['timestamp'] = time
-        d['lat'] = lat
-        d['lon'] = lon
-        d['gps_speed'] = gps_speeds
-        d['tilt_avg'] = tilt_avgs
-        d['tilt_std'] = tilt_stds
-        d['rel_view_az '] = rel_view_az
-        d['q_0'] = q_0     # Mask after step (0) QC
-        d['q_1'] = q_1     # Mask after step (i) QC
-
-        if rrsalgorithm == 'fp':
-            d['q_3'] = q_3 # Mask after step (iii) QC: currently recommended for FP rrs data analysis
-
-        elif rrsalgorithm == '3c':
-            d['q_2'] = q_2   # Mask after step (ii) QC (only applies to 3C)
-            d['q_3'] = q_3  # Mask after step (iii) QC: currently recommended for 3C  rrs data analysis
-
-        # optional to output all qc masks
-        # q_keys = [i for i in locals() if i.startswith('q_')]
-        # for i in range(len(q_keys)): # add all qc fields to the dataframe
-        #     d[str(q_keys[i])] = pd.Series(eval(q_keys[i]))
+        d = access.meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, q_0, q_1, q_2, q_3)
 
         # Store outputs
         if output_metadata:
@@ -246,41 +223,6 @@ def run_example(platform_id = 'PML_SR001',
             np.savetxt(ed_filename, ed, delimiter=',', header = header, fmt='%.8f')
 
     return response
-
-
-#def unpack_response(response, rrsalgorithm, wl_out):
- #   """
-  #  Unpack the WFS response
-    #"""
-    #log.info(response['result'][0].keys())   # uncomment to show all available fields
-
-    #time          = [response['result'][i]['time'] for i in range(len(response['result']))]
-    #lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
-    #lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
-    #rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
-    #sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
-    #platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
-    #platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
-    #gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
-    #tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
-    #tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
-
-    #ed = access.get_l1spectra(response, 'ed_', wl_out) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
-    #ls = access.get_l1spectra(response, 'ls_', wl_out)
-   # lt = access.get_l1spectra(response, 'lt_', wl_out)
-
-
-  #  if rrsalgorithm == '3c':
- #       rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
-#        rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
-
-   # elif rrsalgorithm == 'fp':
-   #     rrswl  = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
-  #      rrs_    = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))])  # rrs spectra 2D matrix format: rows time index, columns wavelength
-  #      offset = np.array([response['result'][i]['nir_offset'] for i in range(len(response['result']))])
-  #      rrs = np.array([rrs_[i,:] - np.ones(len(rrswl))*offset[i] for i in range(len(rrs_))]) # spectral offset (applied as default definition of FP rrs)
-#
-  #  return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
 
 
 def parse_args():
