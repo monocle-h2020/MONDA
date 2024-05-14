@@ -143,7 +143,7 @@ def qc_3c_rho_filter(rho_ds, rho_dd, rho_s, upperbound = 0.1):
 
 
 # filters used in qc of Rrs spectra: Step (iii) in 3C and FP QC chains
-def qc_SS_NIR_filter(wl, rrs, upperthreshold = 3, lowerthreshold = 0.5):
+def qc_ss_nir_filter(wl, rrs, upperthreshold = 3, lowerthreshold = 0.5):
     """Filter based on NIR similarity spectrum (reflectance ratio of 779 and 865 nm) in Ruddick et al. 2006."""
 
     lambda779 = wl_find(wl, 779)

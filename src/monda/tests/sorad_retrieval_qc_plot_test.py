@@ -29,13 +29,13 @@ An optional bounding box is specified providing four space-separated coordinates
 
 Default quality control chain for 3C:
        (0)   Filters based on relative azimuth and tilt angle
-       (i)   Radiometric filtering (lt/ed glint filter, ed and ls anomaly filters)
+       (i)   Radiometric filtering (Lt/Ed glint filter, Ed and Ls anomaly filters)
        (ii)  Algorithmic filtering (3c residual and termination of rho_dd, rho_ds, or rho_ds at optimizion bounds)
        (iii) Rrs-based filtering (similarity spectrum, and filter based on range of Rrs)
 
 Default quality control chain for FP:
        (0)   Filters based on relative azimuth and tilt angle
-       (i)   Radiometric filtering (lt/ed glint filter, ed and ls anomaly filters)
+       (i)   Radiometric filtering (Lt/Ed glint filter, Ed and Ls anomaly filters)
        (ii)  Rrs-based filtering (similarity spectrum, and filter based on max/min of Rrs)
        Note: `algorithmic filtering' is already applied to FP data on the geoserver (based on rho_s bounds)
 
@@ -167,7 +167,7 @@ def run_example(platform_id = 'PML_SR001',
             q_2 = np.nan*np.ones(len(q_1)) # q2 stored as NaN for fp
            
         # Step (iii):  addtional qc metrics that apply to Rrs spectrum
-        q_ss =        qc.qc_SS_NIR_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum filter
+        q_ss =        qc.qc_ss_nir_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum filter
         q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
         q_min =       qc.qc_rrs_min(rrs, rrswl)
         
