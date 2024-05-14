@@ -285,7 +285,7 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
         extent = [np.floor(np.min(lon*10))/10, np.ceil(np.max(lon*10))/10, np.floor(np.min(lat*10))/10, np.ceil(np.max(lat*10))/10]
         request =  cimgt.GoogleTiles(style='satellite')
         ax = plt.axes(projection=ccrs.PlateCarree())
-        ax.add_image(request, 10)
+        ax.add_image(request, map_resolution)
         ax.set_extent(extent, ccrs.PlateCarree())
         gl = ax.gridlines(draw_labels=True)
         gl.top_labels_top = gl.right_labels = False
