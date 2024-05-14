@@ -62,9 +62,9 @@ import access
 
 import datetime
 import logging
-import pandas as pd
+#import pandas as pd
 import argparse
-from math import ceil
+#from math import ceil
 
 log = logging.getLogger('sorad-test')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'

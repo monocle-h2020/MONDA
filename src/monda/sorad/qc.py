@@ -11,12 +11,18 @@ Quality control functions output a logical mask using convention:
 
 Tom Jordan - tjor@pml.ac.uk - Feb 2022
 """
-
+import sys
 import numpy as np
 import datetime
 import pandas as pd
 from statistics import mode
 
+
+import logging
+log = logging.getLogger('sorad-downloader')
+myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
+formatter = logging.Formatter(myFormat)
+logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
 
 # sub routines
 def wl_find(wl, target):
@@ -58,23 +64,22 @@ def rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 150):
 def tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = 2):
     """ Applies upper thresholds to allowed tilt and tilt-standard-deviation values (degs) """
 
-
     mode_tilt_avgs = mode(tilt_avgs)   # test for constant values  
     numberstuck = len(tilt_avgs[mode_tilt_avgs == tilt_avgs])
        
-    if numberstuck > 1:
-        print('Tilt sensor was stuck on single value: do not apply tilt filter')
+    if (numberstuck > 1) & (len(tilt_avgs) > 1):
+        log.error("Tilt sensor was not applied  (stuck on single value)")
+
         q_tilt_avgs = np.ones(len((tilt_avgs)))
         q_tilt_stds = np.ones(len((tilt_stds)))
     else:
         q_tilt_avgs = ~ np.isnan(np.where(tilt_avgs < upper_tilt_bound, tilt_avgs, np.nan))
         q_tilt_stds = ~ np.isnan(np.where(tilt_stds < upper_tilt_std_bound, tilt_stds, np.nan))
         
-
     return q_tilt_avgs, q_tilt_stds
 
 
-# Filters used in QC of l and e spectra (Step (i) in 3C and FP chain)
+# Filters used in QC of L and E spectra (Step (i) in 3C and FP chain)
 def qc_lt_ed_filter(ed, lt, time, wl, threshold = 0.020):
     """Funtion to filter by lt_ed ratio in NIR: basic implementation using absolute threshold defined in sr^-1 on [850, 950] nm"""
 
