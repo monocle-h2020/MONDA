@@ -224,7 +224,6 @@ def run_example(platform_id = 'PML_SR001',
 
     return response
 
-
 def parse_args():
     """Interpret command line arguments"""
     parser = argparse.ArgumentParser()

@@ -305,9 +305,8 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
         
         plt.rc('font', size=14)
         plt.title(str(file_id))
-        plt.legend()
+        # plt.legend()
 
-       # breakpoint()
         plt.savefig(os.path.join(target, file_id + '_coverage-map.png'), format='png', dpi=150)
 
     return
