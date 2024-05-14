@@ -45,18 +45,17 @@ def nearest(items, pivot):
 
 
 # Filters used in Step (0) QC (based on tilt and relative azimuth)
-def rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 170):
-    """ Function to test that So-Rad relative viewing azimiuth is within given angular bounds. 
-    The default lower (110 deg) and upper (170 deg) bounds are based on the AMT cruise defaults"""    
+def rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 150):
+    """ Function to test that So-Rad relative viewing azimiuth is within given angular bounds.  """    
 
-    q_lower =  ~ np.isnan(np.where(np.abs(rel_view_az) < 170, rel_view_az, np.nan))
-    q_upper =  ~ np.isnan(np.where(np.abs(rel_view_az) > 110, rel_view_az, np.nan))
+    q_lower =  ~ np.isnan(np.where(np.abs(rel_view_az) < upper_azi_bound, rel_view_az, np.nan))
+    q_upper =  ~ np.isnan(np.where(np.abs(rel_view_az) > lower_azi_bound, rel_view_az, np.nan))
     q_az =  np.logical_and(q_lower, q_upper)
     q_az =  np.ravel(q_az.astype(int))
 
     return q_az
 
-def tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = np.sqrt(3)):
+def tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = 2):
     """ Applies upper thresholds to allowed tilt and tilt-standard-deviation values (degs) """
 
 

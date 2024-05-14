@@ -34,14 +34,15 @@ Default quality control chain for 3C:
        (iii) Rrs-based filtering (similarity spectrum, and filter based on range of Rrs)
 
 Default quality control chain for FP:
+       (0)   Filters based on relative azimuth and tilt angle
        (i)   Radiometric filtering (lt/ed glint filter, ed and ls anomaly filters)
        (ii)  Rrs-based filtering (similarity spectrum, and filter based on max/min of Rrs)
        Note: `algorithmic filtering' is already applied to FP data on the geoserver (based on rho_s bounds)
 
 Optional filters (commented out below):
-       (i) Rrs shape based filtering (currently includes `coastal water filter' from Warren et al. 2019).
+        - Rrs shape based filtering (currently includes `coastal water filter' from Warren et al. 2019).
            Users are encouraged to apply filters for their local water type
-       (ii) Variability filtering (based on z-score), following Groetsch et al. 2017.
+        - Variability filtering (based on z-score), following Groetsch et al. 2017.
 
 ------------------------------------------------------------------------------
 
@@ -143,8 +144,8 @@ def run_example(platform_id = 'PML_SR001',
             plots.plot_ed_ls_lt(ed, ls, lt, time, wl_output, file_id, target)
 
         # Step (0) QC filters based on relative aziumuth and tilt/tilt std
-        q_az =  qc.rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 170)
-        q_tilt, q_tilt_std =  qc.tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = np.sqrt(3))
+        q_az =  qc.rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 150)
+        q_tilt, q_tilt_std =  qc.tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = 2)
         q_0 =  qc.combined_filter(q_az , qc.combined_filter(q_tilt, q_tilt_std))
    
         # Step (i) radiometric quality control filters (i.e. QC applied to l or e spectra)
