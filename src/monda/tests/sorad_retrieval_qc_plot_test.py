@@ -128,7 +128,6 @@ def run_example(platform_id = 'PML_SR001',
                                   layer=layer, bbox=bbox)
 
         log.info(f"{response['length']} features received.")
-
         if response['length'] == 0:
             continue
     
