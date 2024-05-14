@@ -65,9 +65,9 @@ def tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound =
     """ Applies upper thresholds to allowed tilt and tilt-standard-deviation values (degs) """
 
     mode_tilt_avgs = mode(tilt_avgs)   # test for constant values  
-    numberstuck = len(tilt_avgs[mode_tilt_avgs == tilt_avgs])
+    number_constant = len(tilt_avgs[mode_tilt_avgs == tilt_avgs])
        
-    if (numberstuck > 1) & (len(tilt_avgs) > 1):
+    if (number_constant > 1) & (len(tilt_avgs) > 1):
         log.error("Tilt sensor was not applied  (stuck on single value)")
 
         q_tilt_avgs = np.ones(len((tilt_avgs)))
