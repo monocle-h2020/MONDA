@@ -15,6 +15,7 @@ import datetime
 import json
 import urllib.request
 import urllib.parse
+import pandas as pd
 
 log = logging.getLogger('sorad-downloader')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
@@ -196,3 +197,60 @@ def get_l1spectra(response, spec_id, wl_out=np.arange(350, 951, 1)):
         spec_matrix[i,:] = np.interp(wl_out, spec_wl, spec)  # interpolate to common wavelength grid
 
     return spec_matrix
+
+
+def unpack_response(response, rrsalgorithm, wl_out):
+    """
+    Unpack the WFS response
+    """
+    #log.info(response['result'][0].keys())   # uncomment to show all available fields
+
+    time          = [response['result'][i]['time'] for i in range(len(response['result']))]
+    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
+    platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
+    platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
+    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
+    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+
+    ed = get_l1spectra(response, 'ed_', wl_out) # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
+    ls = get_l1spectra(response, 'ls_', wl_out)
+    lt = get_l1spectra(response, 'lt_', wl_out)
+
+    if rrsalgorithm == '3c':
+        rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
+        rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
+
+    elif rrsalgorithm == 'fp':
+        rrswl  = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
+        rrs_    = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))])  # rrs spectra 2D matrix format: rows time index, columns wavelength
+        offset = np.array([response['result'][i]['nir_offset'] for i in range(len(response['result']))])
+        rrs = np.array([rrs_[i,:] - np.ones(len(rrswl))*offset[i] for i in range(len(rrs_))]) # spectral offset (applied as default definition of FP rrs)
+
+    return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
+
+
+def meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, q_0, q_1, q_2, q_3):
+    """
+    coverts metadata and qc flags into a dataframe
+    """
+    d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
+    d['sample_uuid'] = sample_uuids
+    d['platform_id'] = platform_ids
+    d['platform_uuid'] =platform_ids
+    d['timestamp'] = time
+    d['lat'] = lat
+    d['lon'] = lon
+    d['gps_speed'] = gps_speeds
+    d['tilt_avg'] = tilt_avgs
+    d['tilt_std'] = tilt_stds
+    d['rel_view_az '] = rel_view_az
+    d['q_0'] = q_0     # Mask after step (0) QC
+    d['q_1'] = q_1     # Mask after step (i) QC
+    d['q_2'] = q_2   # Mask after step (ii) QC (only applies to 3C - NaN for fp)
+    d['q_3'] = q_3  # Mask after step (iii) QC
+
+    return d
