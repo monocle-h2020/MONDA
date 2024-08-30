@@ -253,7 +253,4 @@ if __name__ == '__main__':
     if not os.path.isdir(args.target):
         os.mkdir(args.target)
 
-    # response = run_example(args.platform, args.start_time, args.end_time, args.bbox, args.target, args.algorithm.lower(),  # use if running in terminal
-    #                       args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots)
-
-    response = run_example() # use if
+    response = run_example()
