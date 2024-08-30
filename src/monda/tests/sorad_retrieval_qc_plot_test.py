@@ -53,14 +53,10 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import sys
 import os
 import numpy as np
-
 from monda.sorad import access, plots, qc 
-
 import datetime
 import logging
-#import pandas as pd
 import argparse
-#from math import ceil
 
 log = logging.getLogger('sorad-test')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
