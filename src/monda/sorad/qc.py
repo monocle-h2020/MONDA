@@ -19,7 +19,7 @@ from statistics import mode
 
 
 import logging
-log = logging.getLogger('sorad-downloader')
+log = logging.getLogger('sorad-qc')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
 formatter = logging.Formatter(myFormat)
 logging.basicConfig(level = 'INFO', format = myFormat, stream = sys.stdout)
