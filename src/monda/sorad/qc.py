@@ -64,14 +64,14 @@ def rel_az_filter(rel_view_az, lower_azi_bound = 110, upper_azi_bound = 150):
 def tilt_filter(tilt_avgs, tilt_stds, upper_tilt_bound=5, upper_tilt_std_bound = 2):
     """ Applies upper thresholds to allowed tilt and tilt-standard-deviation values (degs) """
 
-    mode_tilt_avgs = mode(tilt_avgs)   # test for constant values  
+    mode_tilt_avgs = mode(tilt_avgs)   # test for constant values 
     number_constant = len(tilt_avgs[mode_tilt_avgs == tilt_avgs])
        
     if (number_constant > 1) & (len(tilt_avgs) > 1):
         log.error("Tilt sensor was not applied  (stuck on single value)")
 
-        q_tilt_avgs = np.ones(len((tilt_avgs)))
-        q_tilt_stds = np.ones(len((tilt_stds)))
+        q_tilt_avgs = np.nan*np.ones(len((tilt_avgs)))
+        q_tilt_stds = np.nan*np.ones(len((tilt_stds)))
     else:
         q_tilt_avgs = ~ np.isnan(np.where(tilt_avgs < upper_tilt_bound, tilt_avgs, np.nan))
         q_tilt_stds = ~ np.isnan(np.where(tilt_stds < upper_tilt_std_bound, tilt_stds, np.nan))
