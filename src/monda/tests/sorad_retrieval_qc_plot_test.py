@@ -53,11 +53,7 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import sys
 import os
 import numpy as np
-# from monda.sorad import access, plots, qc 
-sys.path.append('/users/rsg/tjor/Sorad_mondademos/MONDA/src/monda/sorad')  # for 2024 changes, I have used a local import as
-import qc 
-import plots
-import access
+from monda.sorad import access, plots, qc 
 import datetime
 import logging
 import argparse
