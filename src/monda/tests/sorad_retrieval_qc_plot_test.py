@@ -53,7 +53,11 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import sys
 import os
 import numpy as np
-from monda.sorad import access, plots, qc 
+# from monda.sorad import access, plots, qc 
+sys.path.append('/users/rsg/tjor/Sorad_mondademos/MONDA/src/monda/sorad')  # for 2024 changes, I have used a local import as
+import qc 
+import plots
+import access
 import datetime
 import logging
 import argparse
@@ -210,9 +214,9 @@ def run_example(platform_id = 'PML_SR001',
                 log.warning(f"File {lt_filename} was overwritten")
             if os.path.exists(ed_filename):
                 log.warning(f"File {ed_filename} was overwritten")
-            np.savetxt(ls_filename, ls, delimiter=',', header = header, fmt='%.8f')
-            np.savetxt(lt_filename, lt, delimiter=',', header = header, fmt='%.8f')
-            np.savetxt(ed_filename, ed, delimiter=',', header = header, fmt='%.8f')
+            np.savetxt(ls_filename, ls, delimiter=',', header = header, fmt = '%.8f')
+            np.savetxt(lt_filename, lt, delimiter=',', header = header, fmt = '%.8f')
+            np.savetxt(ed_filename, ed, delimiter=',', header = header, fmt = '%.8f')
 
     return response
 
