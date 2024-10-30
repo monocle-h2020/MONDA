@@ -21,6 +21,7 @@ This code requires:
 - Matplotlib (>=3.3.3)
 - requests (>=2.27.1)
 - cartopy (>=0.20.2)
+
 ## Installation
 **NOTE:** Some users have encountered issues installing into a fresh conda environment with pip due to GEOS 
 versions.  This can be solved by installing cartopy with conda (```conda install cartopy```) before installing monda using pip.
@@ -33,6 +34,12 @@ conda create --name monocle_test python=3.8 cartopy
 conda activate monocle_test
 pip install monda 
 ```
+
+# Version changes
+0.3.0 - So-Rad data QC filter improvements, updated requirements
+0.2.1 - Fixed installation issues
+
+
 # Source code
 To get the most up to date version of the source code please see the repository at:
 ```
@@ -49,73 +56,12 @@ For single submodules (such as WISP or sorad) please use:
 [submodule] In Simis, S., Jackson, T., Jordan, T., Peters, S., and Ghebrehiwot, S. (2022) Monda: Monocle Data Analysis python package, https://github.com/monocle-h2020/MONDA
 
 ## Contributors
-This code was developed with input from Plymouth Marine laboratory (thja-pml@github, tjor@github, StefanSimis@github) and 
-Water Insight (Semhar-Ghe@github, waterthing@github). 
+This code was developed with input from:
+- Plymouth Marine laboratory (thja-pml@github, tjor@github, StefanSimis@github) and 
+- Water Insight (Semhar-Ghe@github, waterthing@github). 
 
 ## Submodule Information
 The package contains access, quality control and visualisation tools for a number of sensor systems, for which details are provided below.
-
-## WISP (station)
-The WISPstation is a fixed position optical instrument used for measuring water-leaving reflectance.
-It records radiance and irradiance with an extended wavelength range of 350nm to 1100nm in two viewing directions,
-which enables continuous and autonomous high-quality measurements for water quality monitoring and satellite validation. 
-The reflectance observations are used to validate satellite measurements of water-leaving reflectance. 
-Concentrations of the most important bio-physical water quality parameters such as chlorophyll-a, cyanobacterial pigment, turbidity and suspended matter, are derived from the reflectance measurement. The WISPstation sends the measurements automatically over 3G/4G/5G to the “WISPcloud” cloud database which makes the results available via an API. Measurement frequency is by default a 15 min interval but be adjusted to suit user requirements. 
-
-#### About WISPcloud
-WISPcloud is a scalable Postgres database that autonomously receives, stores, performs quality control and 
-applies water quality algorithms to all WISPstation measurements. It has an advanced API to serve data requests directly to customers. A separate online documentation can be found here. 
-
-#### Acknowledgement 
-The WISPstation public data were collected by users participating on H2020 funded projects such as EOMORES(http://eomores-h2020.eu), TAPAS(http://tapas-h2020.eu/) and MONOCLE(https://monocle-h2020.eu/). 
-
-#### Example data availability
-Please use the instrument identification serial number and date when searching for data using the WISPcloud API
- 
-| Instrument ID  | Country   | Station         | Longitude | Latitude | Start Date | End Date   |
-|----------------|-----------|-----------------|-----------|----------|------------|------------|
-| WISPstation001 | Italy     | Lake Trasimeno  | 12.344    | 43.1223  | 2018-04-30 | 2018-10-14 |
-| WISPstation001 | Italy     | Lake Trasimeno  | 12.344    | 43.1223  | 2019-06-20 | 2021-05-04 |
-| WISPstation004 | Greece    | Souda           | 24.1112   | 35.4800  | 2018-07-17 | 2019-08-09 |
-| WISPstation005 | Estonia   | Lake Vortsjarv  | 26.1074   | 58.2109  | 2018-05-28 | 2018-10-26 |
-| WISPstation005 | Estonia   | Lake Vortsjarv  | 26.1074   | 58.2109  | 2019-05-31 | 2019-11-01 |
-| WISPstation006 | Lithuania | Curonian Lagoon | 21.1002   | 55.4126  | 2018-08-09 | 2019-10-14 |
-| WISPstation007 | Lithuania | Klaipeda Harbor | 21.1016   | 55.7195  | 2018-08-13 | 2019-09-11 |
-| WISPstation009 | Hungary   | Lake Balaton    | 17.8936   | 46.9143  | 2019-06-17 | 2019-07-12 |
-| WISPstation009 | Hungary   | Halasto         | 17.6167   | 46.6342  | 2019-07-23 | 2019-10-07 |
- 
-#### Functionality of the submodule
-An example script is provided to connect with the WISPcloud API and subsequently plot Rrs and (ir)radiance measurements using date and instrument serial number as input arguments. 
-
-#### Minimum code example 
-```
-from monda.WISP import access
-import numpy as np
-
-instrument = "WISPstation001"
-day = "2019-08-16"
-start = "10:00:00"
-stop = "15:00:00"
-
-def list_to_array(lstring):
-    try:
-        arr = np.array(lstring.lstrip('[').rstrip(']').split(',')).astype(np.float64)
-        return arr
-    except:
-        return None
-
-REQUEST = 'REQUEST=GetData&INSTRUMENT={}&include=measurement.date,measurement.id,level2.reflectance,site.name,level2.quality&TIME={}T{},{}T{}'\
-          .format(instrument, day, start, day, stop)
-
-l2r = access.WISP_data_API_call(REQUEST)
-
-print(l2r[0]) # data header
-
-rrs = [list_to_array(meas['level2.reflectance']) for meas in l2r[1:]]
-wl = np.array(list(range(350, 901, 1)))
-stations = [meas['site.name'] for meas in l2r[1:]]
-times = [meas['measurement.date'][10:16] for meas in l2r[1:]]
-```
 
 
 ## Solar-Tracking Radiometry platform (So-Rad)
@@ -186,6 +132,68 @@ lt = access.get_l1spectra(response, 'lt_', wl_out)
 
 rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
 rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
+```
+
+## WISP (station)
+The WISPstation is a fixed position optical instrument used for measuring water-leaving reflectance.
+It records radiance and irradiance with an extended wavelength range of 350nm to 1100nm in two viewing directions,
+which enables continuous and autonomous high-quality measurements for water quality monitoring and satellite validation. 
+The reflectance observations are used to validate satellite measurements of water-leaving reflectance. 
+Concentrations of the most important bio-physical water quality parameters such as chlorophyll-a, cyanobacterial pigment, turbidity and suspended matter, are derived from the reflectance measurement. The WISPstation sends the measurements automatically over 3G/4G/5G to the “WISPcloud” cloud database which makes the results available via an API. Measurement frequency is by default a 15 min interval but be adjusted to suit user requirements. 
+
+#### About WISPcloud
+WISPcloud is a scalable Postgres database that autonomously receives, stores, performs quality control and 
+applies water quality algorithms to all WISPstation measurements. It has an advanced API to serve data requests directly to customers. A separate online documentation can be found here. 
+
+#### Acknowledgement 
+The WISPstation public data were collected by users participating on H2020 funded projects such as EOMORES(http://eomores-h2020.eu), TAPAS(http://tapas-h2020.eu/) and MONOCLE(https://monocle-h2020.eu/). 
+
+#### Example data availability
+Please use the instrument identification serial number and date when searching for data using the WISPcloud API
+ 
+| Instrument ID  | Country   | Station         | Longitude | Latitude | Start Date | End Date   |
+|----------------|-----------|-----------------|-----------|----------|------------|------------|
+| WISPstation001 | Italy     | Lake Trasimeno  | 12.344    | 43.1223  | 2018-04-30 | 2018-10-14 |
+| WISPstation001 | Italy     | Lake Trasimeno  | 12.344    | 43.1223  | 2019-06-20 | 2021-05-04 |
+| WISPstation004 | Greece    | Souda           | 24.1112   | 35.4800  | 2018-07-17 | 2019-08-09 |
+| WISPstation005 | Estonia   | Lake Vortsjarv  | 26.1074   | 58.2109  | 2018-05-28 | 2018-10-26 |
+| WISPstation005 | Estonia   | Lake Vortsjarv  | 26.1074   | 58.2109  | 2019-05-31 | 2019-11-01 |
+| WISPstation006 | Lithuania | Curonian Lagoon | 21.1002   | 55.4126  | 2018-08-09 | 2019-10-14 |
+| WISPstation007 | Lithuania | Klaipeda Harbor | 21.1016   | 55.7195  | 2018-08-13 | 2019-09-11 |
+| WISPstation009 | Hungary   | Lake Balaton    | 17.8936   | 46.9143  | 2019-06-17 | 2019-07-12 |
+| WISPstation009 | Hungary   | Halasto         | 17.6167   | 46.6342  | 2019-07-23 | 2019-10-07 |
+ 
+#### Functionality of the submodule
+An example script is provided to connect with the WISPcloud API and subsequently plot Rrs and (ir)radiance measurements using date and instrument serial number as input arguments. 
+
+#### Minimum code example 
+```
+from monda.WISP import access
+import numpy as np
+
+instrument = "WISPstation001"
+day = "2019-08-16"
+start = "10:00:00"
+stop = "15:00:00"
+
+def list_to_array(lstring):
+    try:
+        arr = np.array(lstring.lstrip('[').rstrip(']').split(',')).astype(np.float64)
+        return arr
+    except:
+        return None
+
+REQUEST = 'REQUEST=GetData&INSTRUMENT={}&include=measurement.date,measurement.id,level2.reflectance,site.name,level2.quality&TIME={}T{},{}T{}'\
+          .format(instrument, day, start, day, stop)
+
+l2r = access.WISP_data_API_call(REQUEST)
+
+print(l2r[0]) # data header
+
+rrs = [list_to_array(meas['level2.reflectance']) for meas in l2r[1:]]
+wl = np.array(list(range(350, 901, 1)))
+stations = [meas['site.name'] for meas in l2r[1:]]
+times = [meas['measurement.date'][10:16] for meas in l2r[1:]]
 ```
 
 ## Hyperspectral pyranometer (HSP)

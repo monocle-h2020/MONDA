@@ -6,7 +6,7 @@ with open("README.md", "r") as long_info:
 
 setup(
     name='monda',
-    version='0.2.1',
+    version='0.3.0',
     author='',
     author_email='',
     description='A package for retrieval, quality control and analysis of Data from MONOCLE systems',
@@ -20,6 +20,13 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",],
     python_requires=">=3.8",
-    install_requires = ['markdown','requests','cartopy','matplotlib','numpy', 'pandas', 'datetime',
+    install_requires = ['markdown',
+                        'requests',
+                        'cartopy>=0.20.2',
+                        'matplotlib',
+                        'numpy',
+                        'scipy',
+                        'pandas',
+                        'datetime',
                         'argparse'],
 )
