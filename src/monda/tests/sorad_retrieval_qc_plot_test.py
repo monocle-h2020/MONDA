@@ -228,8 +228,8 @@ def parse_args():
                                               default = datetime.datetime(2021,10,22,23,59,59),
                                               help = "Final UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
     parser.add_argument('-b','--bbox',        required = False, type = float, nargs='+', default = None, help = "Restrict query to bounding box format [corner1lat corner1lon corner2lat corner2lon]")
-    parser.add_argument('-t','--target',      required = False, type = str, default=None,
-                                              help = "Path to target folder for plots (defaults to 'So-Rad_testoutput' in the current folder).")
+    parser.add_argument('-t','--target',      required = False, type = str, default='.',
+                                              help = "Path to target folder for plots (defaults to working directory)")
     parser.add_argument('-r','--output_radiance',  required = False, action='store_true', help = "Output Ls, Lt, Ed spectra to csv file")
     parser.add_argument('-m','--output_metadata',  required = False, action='store_true', help = "Output metadata to csv file")
     parser.add_argument('-c','--output_rrs',  required = False, action='store_true', help = "Output Rrs spectra to csv file")
@@ -247,10 +247,7 @@ if __name__ == '__main__':
     if not any([args.output_radiance, args.output_metadata, args.output_rrs, args.output_plots]):
         log.warning("No plots or data outputs specified (see -h for help)")
 
-    if args.target is None:
-        args.target = os.path.join('.', 'So-Rad_test-output')
-
     if not os.path.isdir(args.target):
-        os.mkdir(args.target)
+        os.makedirs(args.target)
 
     response = run_example()
