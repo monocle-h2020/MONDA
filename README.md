@@ -36,8 +36,8 @@ pip install monda
 ```
 
 # Version changes
-0.3.0 - So-Rad data QC filter improvements, updated requirements
-0.2.1 - Fixed installation issues
+- 0.3.0 - So-Rad data QC filter improvements, updated requirements
+- 0.2.1 - Fixed installation issues
 
 
 # Source code
