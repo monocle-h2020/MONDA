@@ -15,12 +15,14 @@ For more information on the MONOCLE project see the [project website](https://ww
 
 ## Dependencies
 This code requires:
-- Python (>= 3.8)
-- NumPy (>= 1.13.3)
+- python (>= 3.8)
+- numPy (>= 1.13.3)
 - scikit-learn(>=0.23.2)
-- Matplotlib (>=3.3.3)
+- matplotlib (>=3.3.3)
 - requests (>=2.27.1)
 - cartopy (>=0.20.2)
+- scipy
+- pandas
 
 ## Installation
 **NOTE:** Some users have encountered issues installing into a fresh conda environment with pip due to GEOS 
