@@ -57,7 +57,7 @@ def find_max_in_wl_range(wl, spectra, minwl, maxwl):
     return maxima
 
 # plot functions
-def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
+def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id='', target=None):
     """Spectral plots for ed ls lt"""
 
     plt.figure(figsize=(8,16))
@@ -95,12 +95,14 @@ def plot_ed_ls_lt(ed, ls, lt, time, wl, file_id, target):
     plt.ylabel('$L_{t}$ [mW m$^{-2}$ sr$^{-1}$ nm$^{-1}$]')
 
     plt.tight_layout()
-    plt.savefig(os.path.join(target, file_id + '_Ed-Ls-Lt-spectra.png'), format='png', dpi=150)
+
+    if target is not None:
+        plt.savefig(os.path.join(target, file_id + '_Ed-Ls-Lt-spectra.png'), format='png', dpi=150)
 
     return
 
 
-def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
+def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id='', target=None):
     """ rrs plot function showing sequential quality control filters"""
 
     if np.sum(q_3) > 0:
@@ -147,12 +149,13 @@ def plot_rrs_qc_3c(rrs, time, wl, q_1, q_2, q_3, file_id, target):
 
         plt.subplots_adjust(hspace=0.5)
 
-        plt.savefig(os.path.join(target, file_id + '_Rrs_QC.png'), format='png', dpi=150)
+        if target is not None:
+            plt.savefig(os.path.join(target, file_id + '_Rrs_QC.png'), format='png', dpi=150)
 
     return
 
 
-def plot_rrs_qc_3c(rrs, time, wl, q_0, q_1, q_2, q_3, file_id, target):
+def plot_rrs_qc_3c(rrs, time, wl, q_0, q_1, q_2, q_3, file_id='', target=None):
     """ rrs plot function showing sequential quality control filters"""
 
     if np.sum(q_3) > 0:
@@ -207,12 +210,13 @@ def plot_rrs_qc_3c(rrs, time, wl, q_0, q_1, q_2, q_3, file_id, target):
         plt.tight_layout()
         plt.subplots_adjust(hspace=0.5)
 
-        plt.savefig(os.path.join(target, file_id + '_Rrs_QC.png'), format='png', dpi=150)
+        if target is not None:
+            plt.savefig(os.path.join(target, file_id + '_Rrs_QC.png'), format='png', dpi=150)
 
     return
 
 
-def plot_rrs_qc_fp(rrs, time, wl, q_0, q_1, q_3, file_id, target):
+def plot_rrs_qc_fp(rrs, time, wl, q_0, q_1, q_3, file_id='', target=None):
     """ rrs plot function showing sequential quality control filters"""
 
     if np.sum(q_3) > 0:
@@ -264,7 +268,6 @@ def plot_rrs_qc_fp(rrs, time, wl, q_0, q_1, q_3, file_id, target):
         plt.xlabel('Wavelength [nm]')
         plt.ylabel('$R_{rs}$   [sr$^{-1}$]')
 
-
         plt.tight_layout()
         plt.subplots_adjust(hspace=0.5)
 
@@ -273,9 +276,7 @@ def plot_rrs_qc_fp(rrs, time, wl, q_0, q_1, q_3, file_id, target):
     return
 
 
-
-
-def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
+def plot_coveragemap(lat, lon , q, file_id='', target=None, map_resolution=10):
     """ coverage map showing quality control filtered data: color scheme matches
     `results' plot"""
     if np.sum(q) > 0:
@@ -306,13 +307,14 @@ def plot_coveragemap(lat, lon , q, file_id, target, map_resolution=10):
         plt.rc('font', size=14)
         plt.title(str(file_id))
         # plt.legend()
-
-        plt.savefig(os.path.join(target, file_id + '_coverage-map.png'), format='png', dpi=150)
+        
+        if target is not None:
+            plt.savefig(os.path.join(target, file_id + '_coverage-map.png'), format='png', dpi=150)
 
     return
 
 
-def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
+def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id='', target=None):
     """ Results plot showing: (i) sky measurement conditions using ls(400)/ed(400) ratio,
     (ii) qc-filtered rrs. Panel (i) is used to illustrate timestamps passing qc. Color scale matches
     between panels so time series and rrs can be visually referenced """
@@ -358,7 +360,7 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id, target):
         plt.ylabel('$R_{rs}$  [sr$^{-1}$]')
         plt.legend()
      
-
-        plt.savefig(os.path.join(target, file_id + '_results.png'), format='png', dpi=150)
+        if target is not None:
+            plt.savefig(os.path.join(target, file_id + '_results.png'), format='png', dpi=150)
 
     return
