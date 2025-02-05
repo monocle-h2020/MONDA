@@ -198,6 +198,29 @@ def get_l1spectra(response, spec_id, wl_out=np.arange(350, 951, 1)):
 
     return spec_matrix
 
+def get_l0spectra(response, spec_id):
+    """
+    (Ir)radiance spectrum in digtal counts
+    
+    response: response from WFS
+    spec_id:  identifier
+    wl:       output wavelength grid
+
+    output:
+    ndarray with rows timestamp index, columns wavelength
+    """
+
+    n_records = len(response['result'])
+    n_pixels = len(response['result'][0]['l0_ed_spectrum'])
+    
+    spec_matrix = np.nan*np.ones([n_records, n_pixels])
+    i = 0
+    for i, res in enumerate(response['result']):
+        spec = res['l0_' + spec_id + '_spectrum']
+        spec_matrix[i,:] = spec
+
+    return spec_matrix
+
 
 def unpack_response(response, rrsalgorithm, wl_out):
     """
@@ -233,6 +256,35 @@ def unpack_response(response, rrsalgorithm, wl_out):
     return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
 
 
+def unpack_response_l0(response, rrsalgorithm, wl_out):
+    """
+    Unpack the WFS L0 response
+    """
+    #log.info(response['result'][0].keys())   # uncomment to show all available fields
+
+    time          = [str(response['result'][i]['time']) for i in range(len(response['result']))]
+    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
+    platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
+    platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
+    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
+    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+  
+    ed_inttime = np.array([response['result'][i]['l0_ed_inttime'] for i in range(len(response['result']))])
+    ls_inttime = np.array([response['result'][i]['l0_ls_inttime'] for i in range(len(response['result']))])
+    lt_inttime = np.array([response['result'][i]['l0_lt_inttime'] for i in range(len(response['result']))])
+
+    ed = get_l0spectra(response, 'ed') #  irradiance spectra in 2D matrix format: rows time index, columns wavelength
+    ls = get_l0spectra(response, 'ls')
+    lt = get_l0spectra(response, 'lt')
+
+    return time, lat, lon, rel_view_az, ed, ls, lt,  ed_inttime, ls_inttime, lt_inttime, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
+
+
+
 def meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, q_0, q_1, q_2, q_3):
     """
     coverts metadata and qc flags into a dataframe
@@ -254,3 +306,5 @@ def meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_
     d['q_3'] = q_3  # Mask after step (iii) QC
 
     return d
+
+
