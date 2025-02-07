@@ -196,6 +196,7 @@ def get_l1spectra(response, spec_id, wl_out=np.arange(350, 951, 1)):
         spec_wl = np.array(get_wl(res, spec_id))  # get the wavelength grid for this particular spectrum
         spec_matrix[i,:] = np.interp(wl_out, spec_wl, spec)  # interpolate to common wavelength grid
 
+  #  breakpoint()
     return spec_matrix
 
 def get_l0spectra(response, spec_id):
@@ -211,14 +212,18 @@ def get_l0spectra(response, spec_id):
     """
 
     n_records = len(response['result'])
-    n_pixels = len(response['result'][0]['l0_ed_spectrum'])
+    n_pixels = len(response['result'][50]['l0_' + spec_id + '_spectrum'])
+   # breakpoint()
     
-    spec_matrix = np.nan*np.ones([n_records, n_pixels])
+    # spec_matrix = np.nan*np.ones([n_records, n_pixels])
+    spec_matrix = np.nan*np.ones([n_records, n_pixels + 5]) # hardcoded
     i = 0
     for i, res in enumerate(response['result']):
         spec = res['l0_' + spec_id + '_spectrum']
-        spec_matrix[i,:] = spec
-
+       # spec_matrix[i,:] = spec
+        spec_matrix[i,:-5] = spec
+        spec_matrix[i,-5:] = 0
+        
     return spec_matrix
 
 

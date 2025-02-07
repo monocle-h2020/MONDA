@@ -53,7 +53,11 @@ Tom Jordan - tjor@pml.ac.uk - Feb 2022
 import sys
 import os
 import numpy as np
-from monda.sorad import access, plots, qc 
+sys.path.append('/users/rsg/tjor/Monda_L0_expts/MONDA/src/monda/sorad')  # for 2024 changes, I have used a local import as
+import qc 
+import plots
+import access
+#from monda.sorad import access, plots, qc 
 import datetime
 import logging
 import argparse
@@ -129,6 +133,7 @@ def run_example(platform_id = 'PML_SR001',
                ed, ls, lt, rrs,\
                sample_uuids, platform_ids, platform_uuids,\
                gps_speeds, tilt_avgs, tilt_stds = access.unpack_response(response, rrsalgorithm, wl_output)
+        breakpoint()
 
         if output_plots:
             log.info("Creating (ir)radiance plots")
@@ -157,6 +162,9 @@ def run_example(platform_id = 'PML_SR001',
         elif rrsalgorithm == 'fp':
             q_2 = np.nan*np.ones(len(q_1)) # q2 stored as NaN for fp
            
+        
+        breakpoint()
+        
         # Step (iii):  addtional qc metrics that apply to Rrs spectrum
         q_ss =        qc.qc_ss_nir_filter(rrswl, rrs, upperthreshold = 3, lowerthreshold = 0.5)  # similarity spectrum filter
         q_maxrange =  qc.qc_rrs_maxrange(rrs, upperthreshold = 0.1, lowerthreshold = 0.00)    # filters on max and min rrs
