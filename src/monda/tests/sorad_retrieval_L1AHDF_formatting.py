@@ -43,6 +43,38 @@ from Source.Utilities import Utilities
 from Source.ProcessL1aTriOS import ProcessL1aTriOS
 
 
+def get_date_time_tags(d):
+    
+    'gets date and time tags consistent with mlb file definitions,'
+    'datetag: fractional days since 1900'
+    'datetag2: YYYYJJJ, float'
+    'timetag HMMSSmuSmuSmuS.'
+    
+    
+    start_time = datetime.datetime(1900,1,1,0,0,0)
+    
+    datetags   = [] 
+    datetag2s  = []
+    timetags   = []
+    for i in range(len(d)):  
+        
+          timestamp_i = datetime.datetime.strptime(d['time'][i], '%Y-%m-%d %H:%M:%S.%f')
+          
+          # fractional days since 1900
+          delta_t_i = timestamp_i - start_time 
+          
+          #
+          datetag_i = delta_t_i.days + delta_t_i.seconds/(60*60*24) + delta_t_i.microseconds/(10**6) 
+          datetag2_i = float(str(timestamp_i.year) + str(timestamp_i.timetuple().tm_yday))  
+          timetag_i = float(str(timestamp_i.hour) + str(timestamp_i.minute).zfill(2) + str(timestamp_i.second).zfill(2) + str(timestamp_i.microsecond)[0:3])
+         
+            
+          datetags.append(datetag_i)
+          datetag2s.append(datetag2_i)
+          timetags.append(timetag_i)
+
+    return datetags, datetag2s, timetags
+          
 
 def run_example(platform_id = 'PML_SR002',
                 start_time = datetime.datetime(2023,10,10,0,0),
@@ -142,6 +174,7 @@ def run_example(platform_id = 'PML_SR002',
         d['tilt_avg'] = tilt_avgs
         d['tilt_std'] = tilt_stds
         d['rel_view_az'] = rel_view_az
+        
         d['inttime_' + sensor_ids[0]] = ed_inttime
         d['inttime_' + sensor_ids[1]] = ls_inttime
         d['inttime_' + sensor_ids[2]] = lt_inttime
@@ -186,6 +219,32 @@ def run_example(platform_id = 'PML_SR002',
             root.attributes["RAW_FILE_NAME"] = "" # leave bmal
             # root.attributes["TIME-STAMP"] = a_name
             root.attributes["CAST"] = str(response['result'][1]['time'].date()) + '_' + str(hours_of_sampling[h]).zfill(2)
+            
+            
+            # so-rad group
+            gp =  HDFGroup()
+            gp.id = 'sorad'
+            root.groups.append(gp)
+            
+            gp.attributes['PLATFORM_ID'] = d['platform_id'][0]
+
+ 
+            gp.addDataset('LAT')
+            gp.datasets['LAT'].data=np.array(d_h['lat'].values, dtype=[('NONE', '<f8')])
+            gp.addDataset('LON')
+            gp.datasets['LON'].data=np.array(d_h['lon'].values, dtype=[('NONE', '<f8')])
+            gp.addDataset('TILT_AVG')
+            gp.datasets['TILT_AVG'].data=np.array(d_h['tilt_avg'].values, dtype=[('NONE', '<f8')])
+            gp.addDataset('TILT_STD')
+            gp.datasets['TILT_STD'].data=np.array(d_h['tilt_std'].values, dtype=[('NONE', '<f8')])
+            gp.addDataset('GPS_SPEED')
+            gp.datasets['GPS_SPEED'].data=np.array(d_h['gps_speed'].values, dtype=[('NONE', '<f8')])
+            gp.addDataset('RELATIVE_AZIMUTH')
+            gp.datasets['RELATIVE_AZIMUTH'].data=np.array(d_h['rel_view_az'].values, dtype=[('NONE', '<f8')])
+            gp.addDataset('SAMPLE_ID')
+            gp.datasets['SAMPLE_ID'].data=np.array(d_h['sample_uuid'].values, dtype=[('NONE', '<U5')]) # U5 dtype
+
+  
     
             # loop over sensor IDs to created HDF sensor-groups
             for sensor_id in sensor_ids:  # master-loop - add as function at later stage?
@@ -204,8 +263,12 @@ def run_example(platform_id = 'PML_SR002',
             
                 # Reshape data - follows  fields in TriOSL1A
                 n_samples = len(d_h) #
-                rec_datetag  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=np.zeros(n_samples)) # defined in mlb: set to zero for now
-                rec_datetag2  = ProcessL1aTriOS.reshape_data('NONE',n_samples, data=np.zeros(n_samples)) # defined in mlb: set to zero for now
+                breakpoint()
+              
+                datetag, datetag2, timetag  =  get_date_time_tags(d_h)
+ 
+                rec_datetag  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=datetag) # defined in mlb: # we use different date convention
+                rec_datetag2  = ProcessL1aTriOS.reshape_data('NONE',n_samples, data=datetag2) # defined in mlb: # we use different time convention
                 rec_inttime = ProcessL1aTriOS.reshape_data(sensor, n_samples, d_h['inttime_' +sensor_id])
                 rec_check  = ProcessL1aTriOS.reshape_data('SUM', n_samples, data=np.zeros(n_samples))
                 rec_darkave  = ProcessL1aTriOS.reshape_data(sensor, n_samples, data=np.zeros(n_samples))
@@ -216,7 +279,7 @@ def run_example(platform_id = 'PML_SR002',
                 rec_spectemp  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=np.zeros(n_samples)) 
                 rec_thermalresp  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=np.zeros(n_samples)) 
                 rec_time  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=np.zeros(n_samples)) 
-                rec_timetag2  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=np.zeros(n_samples))  # defined in mlb: set to zero for now
+                rec_timetag2  = ProcessL1aTriOS.reshape_data('NONE', n_samples, timetag)  # defined in mlb: set to zero for now
         
                 # 
                 gp.attributes['CalFileName'] = 'SAM_'+  sensor_id  + '.ini'
@@ -263,24 +326,20 @@ def run_example(platform_id = 'PML_SR002',
                 gp.datasets[sensor].data=np.array(rec_arr, dtype=ds_dt)
                
                 
-
-                
                 # Add callibration data
                 metacal, cal = ProcessL1aTriOS.read_cal(cal_path + 'Cal_' + sensor_id + '.dat')
                 B1 = gp.addDataset('CAL_' + sensor)
                 B1.columns["0"] = cal.values[:,1].astype(np.float64)
                 B1.columnsToDataset()
                 ProcessL1aTriOS.get_attr(metacal,B1)                
-                breakpoint()
+           
                 metaback, back = ProcessL1aTriOS.read_cal(cal_path + 'Back_' + sensor_id + '.dat')
                 C1 = gp.addDataset('BACK_'+ sensor)
                 C1.columns["0"] = back.values[:,1]
                 C1.columns["1"] = back.values[:,2]
                 C1.columnsToDataset()
                 
-         
                 breakpoint()
-        
 
     return response
 
