@@ -212,17 +212,19 @@ def get_l0spectra(response, spec_id):
     """
 
     n_records = len(response['result'])
-    n_pixels = len(response['result'][50]['l0_' + spec_id + '_spectrum'])
-   # breakpoint()
+    n_pixels = len(response['result'][0]['l0_' + spec_id + '_spectrum'])
+    # breakpoint()
     
-    # spec_matrix = np.nan*np.ones([n_records, n_pixels])
-    spec_matrix = np.nan*np.ones([n_records, n_pixels + 5]) # hardcoded
-    i = 0
-    for i, res in enumerate(response['result']):
-        spec = res['l0_' + spec_id + '_spectrum']
-       # spec_matrix[i,:] = spec
-        spec_matrix[i,:-5] = spec
-        spec_matrix[i,-5:] = 0
+    if n_pixels ==250: # Gen 2 have 250 records
+        spec_matrix = np.nan*np.ones([n_records, n_pixels + 5]) # hardcoded (250 + 5 = 255) 
+        i = 0
+        for i, res in enumerate(response['result']):
+            spec = res['l0_' + spec_id + '_spectrum']
+            # spec_matrix[i,:] = spec
+            spec_matrix[i,:-5] = spec # hardcoded for now
+            spec_matrix[i,-5:] = 0
+   
+    spec_matrix = spec_matrix.astype(int) # convert floats to ints
         
     return spec_matrix
 
@@ -290,26 +292,49 @@ def unpack_response_l0(response, rrsalgorithm, wl_out):
 
 
 
-def meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, q_0, q_1, q_2, q_3):
+def meta_dataframe(sample_uuids, platform_ids, platform_uuids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, q_0, q_1, q_2, q_3):
     """
     coverts metadata and qc flags into a dataframe
     """
     d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
     d['sample_uuid'] = sample_uuids
     d['platform_id'] = platform_ids
-    d['platform_uuid'] =platform_ids
+    d['platform_uuid'] =platform_uuids
     d['timestamp'] = time
     d['lat'] = lat
     d['lon'] = lon
     d['gps_speed'] = gps_speeds
     d['tilt_avg'] = tilt_avgs
     d['tilt_std'] = tilt_stds
-    d['rel_view_az '] = rel_view_az
-    d['q_0'] = q_0     # Mask after step (0) QC
-    d['q_1'] = q_1     # Mask after step (i) QC
-    d['q_2'] = q_2   # Mask after step (ii) QC (only applies to 3C - NaN for fp)
+    d['rel_view_az'] = rel_view_az
+    d['q_0'] = q_0   # Mask after step (0) QC
+    d['q_1'] = q_1  # Mask after step (i) QC
+    d['q_2'] = q_2  # Mask after step (ii) QC (only applies to 3C - NaN for fp)
     d['q_3'] = q_3  # Mask after step (iii) QC
 
+    return d
+
+
+def meta_l0_dataframe(sample_uuids, platform_ids, platform_uuids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, ed_inttime, ls_inttime, lt_inttime, sensor_ids):
+    """
+    coverts metadata and qc flags into a dataframe
+    """
+    d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
+    d['sample_uuid'] = sample_uuids
+    d['platform_id'] = platform_ids
+    d['platform_uuid'] = platform_uuids
+    d['timestamp'] = time
+    d['lat'] = lat
+    d['lon'] = lon
+    d['gps_speed'] = gps_speeds
+    d['tilt_avg'] = tilt_avgs
+    d['tilt_std'] = tilt_stds
+    d['rel_view_az'] = rel_view_az
+      
+    d['inttime_' + sensor_ids[0]] = ed_inttime # L0 int time is also appended
+    d['inttime_' + sensor_ids[1]] = ls_inttime 
+    d['inttime_' + sensor_ids[2]] = lt_inttime
+        
     return d
 
 
