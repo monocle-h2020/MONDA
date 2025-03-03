@@ -74,7 +74,7 @@ def get_date_time_tags(d):
 
     d['datetag'] = np.array(datetags)
     d['datetag2'] = np.array(datetag2s)
-    d['timetag'] = np.array(datetags)
+    d['timetag'] = np.array(timetags)
 
     return d
           
@@ -110,40 +110,58 @@ def init_sorad_group(root, d_h):
     
     # platform fields are stored as attributes
     gp.attributes['PLATFORM_ID'] = d_h['platform_id'][0]
-    gp.attributes['PLATFORM_UUID'] = d_h['platform_uuid'][0]
+    # gp.attributes['PLATFORM_UUID'] = d_h['platform_uuid'][0]
+    gp.attributes['CalFileName'] = 'sorad.tdf' # sorad tdf added as dummy tdf field
+    gp.attributes['FrameType'] = 'Not Required'
 
     # all other fields are stored as datasets
     n_samples = len(d_h) #
 
     # datetag and timetag (duplicating formatting steps from TriOS L1A)
-    rec_datetag  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=d_h['datetag']) # defined in TriOS L1a
-    rec_datetag2  = ProcessL1aTriOS.reshape_data('NONE',n_samples, data=d_h['datetag2']) # defined in TriOS L1a
+    rec_datetag  = ProcessL1aTriOS.reshape_data('NONE',  n_samples, data=d_h['datetag']) # defined in TriOS L1a
+    rec_datetag2  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=d_h['datetag2']) # defined in TriOS L1a
     rec_timetag2  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=d_h['timetag'])  # defined in TriOS L1a
-   
+
+    #
     gp.addDataset('DATETAG')
     gp.datasets['DATETAG'].data=np.array(rec_datetag2, dtype=[('NONE', '<f8')])
+    
+    #
     gp.addDataset('TIMETAG2')
     gp.datasets['TIMETAG2'].data=np.array(rec_timetag2, dtype=[('NONE', '<f8')])
 
     #  
-    gp.addDataset('LATPOS')
-    gp.datasets['LATPOS'].data=np.array(d_h['lat'].values, dtype=[('NONE', '<f8')])
-    gp.addDataset('LONPOS')
-    gp.datasets['LONPOS'].data=np.array(d_h['lon'].values, dtype=[('NONE', '<f8')])
+    gp.addDataset('LATITUDE')
+    gp.datasets['LATITUDE'].data=np.array(d_h['lat'].values, dtype=[('NONE', '<f8')])
+    gp.attributes["LATITUDE_UNITS"]='degrees'
+    
+    #
+    gp.addDataset('LONGITUDE')
+    gp.datasets['LONGITUDE'].data=np.array(d_h['lon'].values, dtype=[('NONE', '<f8')])
+    gp.attributes["LONGITUDE_UNITS"]='degrees'
+    
+    #
+    gp.addDataset("REL_AZ")
+    gp.datasets['REL_AZ'].data=np.array(d_h['rel_view_az'].values, dtype=[('NONE', '<f8')])
+    gp.attributes['REL_AZ_UNITS']='degrees'
+    
+    #
     gp.addDataset('TILT')
     gp.datasets['TILT'].data=np.array(d_h['tilt_avg'].values, dtype=[('NONE', '<f8')])
-    gp.addDataset('RELATIVE_AZIMUTH')
-    gp.datasets['RELATIVE_AZIMUTH'].data=np.array(d_h['rel_view_az'].values, dtype=[('NONE', '<f8')])
+    gp.attributes['TILT_UNITS']='degrees'
     # gp.addDataset('SORAD_UUID') # STATION == UUID 
     # gp.datasets['SORAD_UUID'].data=np.array(d_h['sample_uuid'].values, dtype=[('NONE', '<U36')])
-
+    
+    #
     gp.addDataset('TILT_STD') # POTENTIALLY NOT NEEDED?
     gp.datasets['TILT_STD'].data=np.array(d_h['tilt_std'].values, dtype=[('NONE', '<f8')])
+    gp.attributes['TILT_STD_UNITS']='degrees'
+    
+    #
     gp.addDataset('GPS_SPEED') # POTENTIALLY NOT NEEDED?
-    gp.datasets['GPS_SPEED'].data=np.array(d_h['gps_speed'].values, dtype=[('NONE', '<f8')])           
-
-
-    print('sorad group added to HDF')
+    gp.datasets['GPS_SPEED'].data=np.array(d_h['gps_speed'].values, dtype=[('NONE', '<f8')])   
+    gp.attributes['GPS_SPEED_UNITS']='m/s'    
+    print('Sorad group added to HDF')
     
     return
 
@@ -166,7 +184,6 @@ def init_sensor_group(root, l0_data, sensor_id, config_path, cal_path, d_h):
 
     # Reshape data - follows  fields in TriOSL1A
     n_samples = len(d_h) #
-  
     d_h  =  get_date_time_tags(d_h)
  
     rec_datetag  = ProcessL1aTriOS.reshape_data('NONE', n_samples, data=d_h['datetag']) # defined in mlb: # we use different date convention
@@ -184,7 +201,9 @@ def init_sensor_group(root, l0_data, sensor_id, config_path, cal_path, d_h):
     rec_timetag2  = ProcessL1aTriOS.reshape_data('NONE', n_samples, d_h['timetag'])  # defined in mlb: set to zero for now
 
     # note - the majority of these datasets are set to zero 
-    gp.attributes['CalFileName'] = 'SAM_'+  sensor_id  + '.ini'
+    gp.attributes['CalFileName'] = sensor_id  + '.ini'
+    gp.attributes['FrameType'] = sensor
+    
     gp.addDataset('DATETAG')
     gp.datasets['DATETAG'].data=np.array(rec_datetag2, dtype=[('NONE', '<f8')])
     gp.addDataset('INTTIME')
@@ -239,7 +258,7 @@ def init_sensor_group(root, l0_data, sensor_id, config_path, cal_path, d_h):
     C1.columns["0"] = back.values[:,1]
     C1.columns["1"] = back.values[:,2]
     C1.columnsToDataset()
-    
+    ProcessL1aTriOS.get_attr(metacal,C1)        
     print(str(sensor_id) +' ('  + str(sensor) + ')  added to HDF')
     
     return
@@ -313,7 +332,7 @@ def run_example(platform_id = 'PML_SR002',
         ################################
         
         # For now, hardcoded   
-        sensor_ids = ['SAM_874F', 'SAM_874E', 'SAM_874C'] # ES (ed), LI (LS), LT (lt)
+        sensor_ids = ['SAM_874F', 'SAM_874C', 'SAM_874E'] # ES (ed), LI (LS), LT (lt)
         cal_path = '/users/rsg/tjor/HyperCP_Sorad/HyperCP/Config/sample_TRIOS_sorad_Calibration/'
         config_path = '/users/rsg/tjor/HyperCP_Sorad/HyperCP/Config/sample_TRIOS_sorad.cfg' 
         output_path = '/users/rsg/tjor/Monda_L0_expts/MONDA/src/monda/HDF_output/' # temporay fix 
@@ -342,6 +361,7 @@ def run_example(platform_id = 'PML_SR002',
             ls_h = ls[hours == hours_of_sampling[h]]
             lt_h = lt[hours == hours_of_sampling[h]]      
    
+            breakpoint()
             # get date and time flags following conventions in ProcessTriOSL1A
             d_h = get_date_time_tags(d_h) 
    
@@ -383,7 +403,6 @@ def run_example(platform_id = 'PML_SR002',
             ls_h = []
             lt_h = []
    
-
     return 
 
 def parse_args():
