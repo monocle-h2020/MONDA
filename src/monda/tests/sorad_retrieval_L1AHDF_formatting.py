@@ -58,7 +58,11 @@ def get_date_time_tags(d):
     
     for i in range(len(d)):  
         
-          timestamp_i = datetime.datetime.strptime(d['timestamp'][i], '%Y-%m-%d %H:%M:%S.%f')
+        #  timestamp_i = datetime.datetime.strptime(d['timestamp'][i], '%Y-%m-%d %H:%M:%S.%f')
+          if len(d['timestamp'][i]) > 25: 
+              timestamp_i = datetime.datetime.strptime(d['timestamp'][i], '%Y-%m-%d %H:%M:%S.%f')
+          else:
+              timestamp_i = datetime.datetime.strptime(d['timestamp'][i], '%Y-%m-%d %H:%M:%S') #case of integer secss
           
           # fractional days since 1900
           delta_t_i = timestamp_i - start_time 
@@ -102,7 +106,8 @@ def init_attributes(root, response, hour):
 def init_sorad_group(root, d_h):
     
     'Itialise HDF group for sorad ancillary data'
-        
+    print(d_h['lat'])    
+    
     # create sorad group
     gp =  HDFGroup()
     gp.id = 'sorad'
@@ -161,7 +166,7 @@ def init_sorad_group(root, d_h):
     gp.addDataset('GPS_SPEED') # POTENTIALLY NOT NEEDED?
     gp.datasets['GPS_SPEED'].data=np.array(d_h['gps_speed'].values, dtype=[('NONE', '<f8')])   
     gp.attributes['GPS_SPEED_UNITS']='m/s'    
-    print('Sorad group added to HDF')
+    print('Sorad group added to HDF') 
     
     return
 
@@ -238,7 +243,6 @@ def init_sensor_group(root, l0_data, sensor_id, config_path, cal_path, d_h):
     wl = []
     for i in range(1,256):
         wl.append(str(round((c0 + c1*(i+1) + c2*(i+1)**2 + c3*(i+1)**3), 2)))
-   
     # Add level0 sensor data (irradiances/radiances) 
     ds_dt = np.dtype({'names': wl,'formats': [np.float64]*len(wl)})
     my_arr = np.array(l0_data[sensor_id]).transpose()
@@ -258,15 +262,15 @@ def init_sensor_group(root, l0_data, sensor_id, config_path, cal_path, d_h):
     C1.columns["0"] = back.values[:,1]
     C1.columns["1"] = back.values[:,2]
     C1.columnsToDataset()
-    ProcessL1aTriOS.get_attr(metacal,C1)        
+    ProcessL1aTriOS.get_attr(metaback,C1)        
     print(str(sensor_id) +' ('  + str(sensor) + ')  added to HDF')
     
     return
 
 
 def run_example(platform_id = 'PML_SR002',
-                start_time = datetime.datetime(2023,10,10,0,0),
-                end_time = datetime.datetime(2023,10,10,23,59,59),
+                start_time = datetime.datetime(2024,8,10,0,0,0),
+                end_time = datetime.datetime(2024,8,10,23,0,0),
                 bbox = None,
                 target='.',  
                 rrsalgorithm='3c',
@@ -286,6 +290,14 @@ def run_example(platform_id = 'PML_SR002',
     target:      destination folder for plots/data
     rrsalgorithm Fingerprint (fp) or 3c Rrs processing algorithm
     """
+    
+
+    ############################## THE FOLLOWING LINES ARE HARDCODED
+    sensor_ids = ['SAM_874F', 'SAM_874C', 'SAM_874E'] # ES (ed), LI (LS), LT (lt) # 2023b and 2024
+    # sensor_ids = ['SAM_874F', 'SAM_874E', 'SAM_874C'] # ES (ed), LT (Lt), LI (ls) # 2023a,
+    cal_path = '/users/rsg/tjor/HyperCP_Sorad/HyperCP/Config/sample_TRIOS_sorad_Calibration_2024/' # 2024 cals - HARDCODED
+    config_path = '/users/rsg/tjor/HyperCP_Sorad/HyperCP/Config/sample_TRIOS_sorad_2024finalV.cfg' # cal diretrory needs manually changing in cfg file
+    output_path = '/users/rsg/tjor/Monda_L0_expts/MONDA/src/monda/HDF_L0_2024/'
 
     wl_output = np.arange(300, 1001, 1)  # output range to interpolate (ir)radiance spectra. Note that Rrs is already interpolated to 1-nm over the available sensor range.
     if rrsalgorithm == 'fp':
@@ -294,6 +306,7 @@ def run_example(platform_id = 'PML_SR002',
     elif rrsalgorithm == '3c':
         # layer = 'rsg:sorad_public_l0' # level 0 layer
         layer = 'rsg:sorad_dev_l0_hypercp' # level 0 layer
+        layer_2 = 'rsg:sorad_public_view_3c_full'
     else:
         log.error(f"{rrsalgorithm} is not a valid choice and must be one of [fp, 3c]")
 
@@ -305,11 +318,12 @@ def run_example(platform_id = 'PML_SR002',
     days = (final_day - initial_day).days + 1
     log.info(f"Request spans {days} day(s)")
     
+ 
     for i in range(days):
         
         this_day      = initial_day + datetime.timedelta(days = i)
         datetime_i    = datetime.datetime(this_day.year, this_day.month, this_day.day, 0, 0, 0)
-        datetime_e    = datetime.datetime(this_day.year, this_day.month, this_day.day, 23, 59, 59, 999999)
+        datetime_e    = datetime.datetime(this_day.year, this_day.month, this_day.day, 23, 59, 59)
 
         if datetime_i < start_time:
             datetime_i = start_time
@@ -317,42 +331,42 @@ def run_example(platform_id = 'PML_SR002',
             datetime_e = end_time
 
         log.info(f"Request timeframe {datetime_i.isoformat()} - {datetime_e.isoformat()}")
+   
 
         response = access.get_wfs(platform = platform_id,
                                   timewindow = (datetime_i, datetime_e),
-                                  layer=layer, bbox=bbox)
-    
+                                  layer=layer)
+        
+
+        log.info(f"{response['length']} features received.")
         if response['length'] == 0:
             continue
-
+        
         date_id = f"{datetime_i.strftime('%Y-%m-%d')}"   # labelling for output data files and plots
 
         ###################################
         #  L0-specific steps begin here
         ################################
-        
-        # For now, hardcoded   
-        sensor_ids = ['SAM_874F', 'SAM_874C', 'SAM_874E'] # ES (ed), LI (LS), LT (lt)
-        cal_path = '/users/rsg/tjor/HyperCP_Sorad/HyperCP/Config/sample_TRIOS_sorad_Calibration/'
-        config_path = '/users/rsg/tjor/HyperCP_Sorad/HyperCP/Config/sample_TRIOS_sorad.cfg' 
-        output_path = '/users/rsg/tjor/Monda_L0_expts/MONDA/src/monda/HDF_output/' # temporay fix 
+    
  
         # Retrieve L0 data from database
         time, lat, lon, rel_view_az,\
         ed, ls, lt, \
         ed_inttime, ls_inttime, lt_inttime, \
-        sample_uuid, platform_id, platform_uuid,\
+        sample_uuids, platform_ids, platform_uuids,\
         gps_speed, tilt_avg, tilt_std = access.unpack_response_l0(response, rrsalgorithm, wl_output)
-     
+        
+
         # Store core Sorad metadata, including sensor integration times in a dataframe 
-        d = access.meta_l0_dataframe(sample_uuid, platform_id, platform_uuid, time, lat, lon, gps_speed, tilt_avg, tilt_std, rel_view_az, ed_inttime, ls_inttime, lt_inttime, sensor_ids)
-      
+        d = access.meta_l0_dataframe(sample_uuids, platform_ids, platform_uuids, time, lat, lon, gps_speed, tilt_avg, tilt_std, rel_view_az, ed_inttime, ls_inttime, lt_inttime, sensor_ids)
+
         # hours of sampling within day
         hours = [response['result'][i]['time'].hour for i in range(len(response['result']))]
         hours_of_sampling = np.unique(hours)
         
-        
         outFFP = [] # list for output file path
+        
+    
         for h in range(len(hours_of_sampling)): # loop over hours of sampling in each day to create hourly hdf files
      
             # sub-sample each hour of so-rad data (indexed by hour h)
@@ -360,8 +374,8 @@ def run_example(platform_id = 'PML_SR002',
             ed_h = ed[hours == hours_of_sampling[h]]
             ls_h = ls[hours == hours_of_sampling[h]]
             lt_h = lt[hours == hours_of_sampling[h]]      
-   
-            breakpoint()
+    
+           #   breakpoint()
             # get date and time flags following conventions in ProcessTriOSL1A
             d_h = get_date_time_tags(d_h) 
    
@@ -377,31 +391,34 @@ def run_example(platform_id = 'PML_SR002',
         
             # create sensor l0 groups
             l0_data = {sensor_ids[0]: ed_h,  sensor_ids[1]: ls_h, sensor_ids[2]: lt_h} # l0 data in dict
+
             for s in range(len(sensor_ids)):  # loop over sensor types
                 init_sensor_group(root, l0_data, sensor_ids[s], config_path, cal_path, d_h)
-         
+     
             # write to file
-            hdf_filename =  str(platform_id[0]) + '_' + f"{datetime_i.strftime('%Y-%m-%d')}"  + '_' + str(hours_of_sampling[h]).zfill(2) + '_L1A.hdf'
-    
-         
+            hdf_filename =  str(platform_ids[0]) + '_' + f"{datetime_i.strftime('%Y-%m-%d')}"  + '_' + str(hours_of_sampling[h]).zfill(2) + '_L1A.hdf'
+            breakpoint()
             outFFP.append(os.path.join(output_path, hdf_filename))
             root.attributes["L1A_FILENAME"] = outFFP[-1]
         
-            try:
+            #    try:
                 # root.writeHDF5(new_name)
-                root.writeHDF5(outFFP[-1])
+            # breakpoint()
+            root.writeHDF5(outFFP[-1])
 
-            except Exception:
-                msg = 'Unable to write L1A file. It may be open in another program.'
-                Utilities.errorWindow("File Error", msg)
-                print(msg)
-                Utilities.writeLogFile(msg)
-                return None, None
+            #   except Exception:
                 
-            d_h = []
-            ed_h = []
-            ls_h = []
-            lt_h = []
+            #      msg = 'Unable to write L1A file. It may be open in another program.'
+            #  Utilities.errorWindow("File Error", msg)
+            #     print(msg)
+            #   Utilities.writeLogFile(msg)
+            #  return None, None
+            breakpoint()
+        d_h = []
+        ed_h = []
+        ls_h = []
+        lt_h = []
+        
    
     return 
 

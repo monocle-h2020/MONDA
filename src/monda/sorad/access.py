@@ -173,6 +173,10 @@ def get_wl(res, spec_id):
     for i in range(1, len(wave)+1, 1):
         wave[i-1] = (c0s) + (c1s*(i+1)) +\
             (c2s*(i+1)**2) + (c3s*(i+1)**3)
+    print(str(c0s))
+    print(str(c1s))
+    print(str(c2s))
+    print(str(c3s))
 
     return wave
 
@@ -190,18 +194,38 @@ def get_l1spectra(response, spec_id, wl_out=np.arange(350, 951, 1)):
     """
 
     spec_matrix = np.nan*np.ones([len(response['result']), len(wl_out)])
-    i = 0
     for i, res in enumerate(response['result']):
         spec = res[spec_id + 'spectrum']
         spec_wl = np.array(get_wl(res, spec_id))  # get the wavelength grid for this particular spectrum
         spec_matrix[i,:] = np.interp(wl_out, spec_wl, spec)  # interpolate to common wavelength grid
 
-  #  breakpoint()
     return spec_matrix
+
+def get_l1spectra_nativeWL(response, spec_id):
+    """
+    (Ir)radiance spectrum as a 2D matrix sampled on native wavelength grids
+
+    response: response from WFS
+    spec_id:  identifier
+    wl:       output wavelength grid
+
+    output:
+    ndarray with rows timestamp index, columns wavelength
+    """
+    res_0 = response['result'][0]
+    spec_wl = np.array(get_wl(res_0, spec_id)) # this is native WL
+    spec_matrix = np.nan*np.ones([len(response['result']), len(spec_wl)])
+    for i, res in enumerate(response['result']):
+       spec = res[spec_id + 'spectrum']
+       spec_matrix[i,:] = spec
+
+    return spec_matrix, spec_wl
+
+
 
 def get_l0spectra(response, spec_id):
     """
-    (Ir)radiance spectrum in digtal counts
+    (Ir)radiance spectrum in digtal counts at lev3l 0
     
     response: response from WFS
     spec_id:  identifier
@@ -215,15 +239,24 @@ def get_l0spectra(response, spec_id):
     n_pixels = len(response['result'][0]['l0_' + spec_id + '_spectrum'])
     # breakpoint()
     
-    if n_pixels ==250: # Gen 2 have 250 records
-        spec_matrix = np.nan*np.ones([n_records, n_pixels + 5]) # hardcoded (250 + 5 = 255) 
+    if n_pixels == 256: # Gen 1 have 256 records 
+        spec_matrix = np.nan*np.ones([n_records, n_pixels - 1]) # hardcoded (256 + -1 = 255), 255 is needed in HyperCP
         i = 0
         for i, res in enumerate(response['result']):
             spec = res['l0_' + spec_id + '_spectrum']
-            # spec_matrix[i,:] = spec
-            spec_matrix[i,:-5] = spec # hardcoded for now
-            spec_matrix[i,-5:] = 0
+            spec_matrix[i,:] = spec[:-1]
    
+    elif n_pixels == 250: # Gen 2 have 250 records
+        spec_matrix = np.nan*np.ones([n_records, n_pixels + 5]) # hardcoded (250 + 5 = 255), 255 is needed in HyperCP
+        i = 0
+        for i, res in enumerate(response['result']):
+            spec = res['l0_' + spec_id + '_spectrum']
+            spec_matrix[i,:-5] = spec # hardcoded for now
+            spec_matrix[i,-5:] = 0 # we can't use NaN for no data; hence this is zero
+    else:
+        print('number of pixels is not 256 (G1) or 250 (G2)')
+      
+
     spec_matrix = spec_matrix.astype(int) # convert floats to ints
         
     return spec_matrix
@@ -263,6 +296,7 @@ def unpack_response(response, rrsalgorithm, wl_out):
     return rrswl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
 
 
+
 def unpack_response_l0(response, rrsalgorithm, wl_out):
     """
     Unpack the WFS L0 response
@@ -291,6 +325,45 @@ def unpack_response_l0(response, rrsalgorithm, wl_out):
     return time, lat, lon, rel_view_az, ed, ls, lt,  ed_inttime, ls_inttime, lt_inttime, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
 
 
+def unpack_response_nativeWL(response, rrsalgorithm, wl_out):
+    """
+    Unpack the WFS L1 response on native wavelength grids
+    """
+    #log.info(response['result'][0].keys())   # uncomment to show all available fields
+
+    time          = [response['result'][i]['time'] for i in range(len(response['result']))]
+    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    sample_uuid   = np.array([response['result'][i]['sample_uuid'] for i in range(len(response['result']))])
+    platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))])
+    platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))])
+    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
+    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+
+    ed, edwl = get_l1spectra_nativeWL(response, 'ed_') # # irradiance spectra in 2D matrix format: rows time index, columns wavelength
+    ls, lswl = get_l1spectra_nativeWL(response, 'ls_')
+    lt, ltwl = get_l1spectra_nativeWL(response, 'lt_')
+    
+    # mask 1st pixel to nan 
+    ed[:,0] =np.nan
+    ls[:,0] = np.nan
+    lt[:,0] =np.nan
+
+    if rrsalgorithm == '3c':
+        rrswl = np.arange(response['result'][0]['c3_wl_grid'][0], response['result'][0]['c3_wl_grid'][1], response['result'][0]['c3_wl_grid'][2])  # reconstruct wavelength grid for Rrs
+        rrs = np.array([response['result'][i]['c3_rrs'][:] for i in range(len(response['result']))]) # 2D matrix format: rows time index, columns wavelength
+
+    elif rrsalgorithm == 'fp':
+        rrswl  = np.arange(response['result'][0]['wl_grid'][0], response['result'][0]['wl_grid'][1]-1, response['result'][0]['wl_grid'][2])  # reconstruct wavelength grid for Rrs
+        rrs_    = np.array([response['result'][i]['rrs'][:] for i in range(len(response['result']))])  # rrs spectra 2D matrix format: rows time index, columns wavelength
+        offset = np.array([response['result'][i]['nir_offset'] for i in range(len(response['result']))])
+        rrs = np.array([rrs_[i,:] - np.ones(len(rrswl))*offset[i] for i in range(len(rrs_))]) # spectr
+
+    return rrswl, edwl, lswl, ltwl, time, lat, lon, rel_view_az, ed, ls, lt, rrs, sample_uuid, platform_id, platform_uuid, gps_speed, tilt_avg, tilt_std
+
+
 
 def meta_dataframe(sample_uuids, platform_ids, platform_uuids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, q_0, q_1, q_2, q_3):
     """
@@ -317,7 +390,7 @@ def meta_dataframe(sample_uuids, platform_ids, platform_uuids, time, lat, lon, g
 
 def meta_l0_dataframe(sample_uuids, platform_ids, platform_uuids, time, lat, lon, gps_speeds, tilt_avgs, tilt_stds, rel_view_az, ed_inttime, ls_inttime, lt_inttime, sensor_ids):
     """
-    coverts metadata and qc flags into a dataframe
+    coverts metadata into dataframe including L0 integration times
     """
     d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
     d['sample_uuid'] = sample_uuids
