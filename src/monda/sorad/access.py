@@ -240,7 +240,7 @@ def meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_
     d = pd.DataFrame()   # store core metadata and qc flags in a data frame for easy output formatting
     d['sample_uuid'] = sample_uuids
     d['platform_id'] = platform_ids
-    d['platform_uuid'] =platform_ids
+    d['platform_uuid'] = platform_uuid
     d['timestamp'] = time
     d['lat'] = lat
     d['lon'] = lon
