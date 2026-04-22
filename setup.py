@@ -28,5 +28,6 @@ setup(
                         'scipy',
                         'pandas',
                         'datetime',
-                        'argparse'],
+                        'argparse',
+                        'dateutil'],
 )
