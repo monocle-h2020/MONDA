@@ -46,7 +46,7 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
             if isinstance(time_start, str):
                 time_start = str2datetime(time_start)
             if isinstance(time_end, str):
-                time_start = str2datetime(time_end)
+                time_end = str2datetime(time_end)
         except:
             log.error("timewindow: Failed to convert string to datetime (doc: dateutil.parse.parser")
             return None
@@ -156,7 +156,7 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
                 if any(word in key for word in ["date", "time"]):  # try to convert into timestamp
                     try:
                         feature[key] = str2datetime(val)
-                    except:
+                    except Exception as err:
                         if warn_conversion_failed:
                             log.error(f"Error parsing date or time field: {val} (type {type(val)})")
                             log.exception(err)
