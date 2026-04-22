@@ -144,6 +144,7 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
 
         # flatten the response and deal with special cases
         features = [None]*len(data['features'])
+        warn_conversion_failed = True
         for i, datum in enumerate(data['features']):
             feature = datum['properties']
             feature['lon'] = datum['geometry']['coordinates'][0]
@@ -152,16 +153,16 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
                 if isinstance(val, str):
                     if val.count(',') > 0:  # convert comma-separated strings to numpy arrays
                         feature[key] = np.array([float(w) for w in val.split(',')])
-                if ('date' in key) or ('time' in key):  # try to convert into timestamp
+                if any(word in key for word in ["date", "time"]):  # try to convert into timestamp
                     try:
-                        feature[key] = datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%fZ')
-                    except ValueError:
-                        try:
-                            feature[key] = datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%SZ')
-                        except ValueError:
-                            log.error(f"Error parsing date or time field: {val}")
-                    except Exception as err:
+                        feature[key] = str2datetime(val)
+                    except:
+                        if warn_conversion_failed:
+                            log.error(f"Error parsing date or time field: {val} (type {type(val)})")
                             log.exception(err)
+                            # make sure to warn only once
+                            warn_conversion_failed = False
+                        feature[key] = val
             features[i] = feature
 
         log.info(f"Page {page}, starting at count {startIndex}: {len(features)} features")
