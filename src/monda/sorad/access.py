@@ -16,6 +16,7 @@ import json
 import urllib.request
 import urllib.parse
 import pandas as pd
+from dateutil.parser import parse as str2datetime
 
 log = logging.getLogger('sorad-downloader')
 myFormat = '%(asctime)s | %(name)s | %(levelname)s | %(message)s'
@@ -33,25 +34,33 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
     : str layer:        Specify the geoserver layer. For a list of available layers see https://rsg.pml.ac.uk/geoserver/. (default rsg:sorad_public_view_fp_rrs)
 
     """
-    if isinstance(timewindow, tuple):
-        if (isinstance(timewindow[0], str)) and (isinstance(timewindow[1], str)):
-            try:
-                time_start = datetime.datetime.strftime(timewindow[0], '%Y-%m-%dT%H:%M:%SZ')
-                time_end   = datetime.datetime.strftime(timewindow[1], '%Y-%m-%dT%H:%M:%SZ')
-            except:
-                log.error("timewindow should be a tuple of type datetime.datetime or iso-formatted string i.e. 'YYYY-mm-ddTHH:MM:SSZ'")
-                return None
-        elif (isinstance(timewindow[0], datetime.datetime)) and (isinstance(timewindow[1], datetime.datetime)):
-            time_start = timewindow[0]
-            time_end = timewindow[1]
-        else:
-            log.error("timewindow should be a tuple of type datetime.datetime or iso-formatted string i.e. 'YYYY-mm-ddTHH:MM:SSZ'")
+    if isinstance(timewindow, (list,tuple)):
+        if len(timewindow) != 2:
+            log.error("timewindow must be a tuple/list of length two or None (Defaults to last 24h)")
+            return None
+        if not all(isinstance(t, (datetime.datetime, str)) for t in timewindow):
+            log.error("timewindow must have type datetime.datetime or str")
+            return None
+        try:
+            time_start, time_end = timewindow
+            if isinstance(time_start, str):
+                time_start = str2datetime(time_start)
+            if isinstance(time_end, str):
+                time_end = str2datetime(time_end)
+        except:
+            log.error("timewindow: Failed to convert string to datetime (doc: dateutil.parse.parser")
             return None
     elif timewindow is None:
         # default to the last 24H
         time_start = datetime.datetime.now() - datetime.timedelta(days=1)
         time_end = datetime.datetime.now()
+    else:
+        log.error("timewindow must be a tuple/list of length two or None (Defaults to last 24h)")
+        return None
 
+    if time_start > time_end:
+        log.error(f"timewindow is empty ({time_start} to {time_end})")
+        return None
     # build a CQL filter to get a time slice
     cql = ''
 
@@ -135,6 +144,7 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
 
         # flatten the response and deal with special cases
         features = [None]*len(data['features'])
+        warn_conversion_failed = True
         for i, datum in enumerate(data['features']):
             feature = datum['properties']
             feature['lon'] = datum['geometry']['coordinates'][0]
@@ -143,16 +153,16 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
                 if isinstance(val, str):
                     if val.count(',') > 0:  # convert comma-separated strings to numpy arrays
                         feature[key] = np.array([float(w) for w in val.split(',')])
-                if ('date' in key) or ('time' in key):  # try to convert into timestamp
+                if any(word in key for word in ["date", "time"]):  # try to convert into timestamp
                     try:
-                        feature[key] = datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%S.%fZ')
-                    except ValueError:
-                        try:
-                            feature[key] = datetime.datetime.strptime(val, '%Y-%m-%dT%H:%M:%SZ')
-                        except ValueError:
-                            log.error(f"Error parsing date or time field: {val}")
+                        feature[key] = str2datetime(val)
                     except Exception as err:
+                        if warn_conversion_failed:
+                            log.error(f"Error parsing date or time field: {val} (type {type(val)})")
                             log.exception(err)
+                            # make sure to warn only once
+                            warn_conversion_failed = False
+                        feature[key] = val
             features[i] = feature
 
         log.info(f"Page {page}, starting at count {startIndex}: {len(features)} features")
