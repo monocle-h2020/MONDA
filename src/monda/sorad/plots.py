@@ -332,9 +332,9 @@ def plot_results(ed ,ls, wl_out, rrs, rrswl, time, q, file_id='', target=None):
         plt.subplot(2, 1, 1)
         plt.suptitle(str(file_id))
 
-        plt.title(f"Sky conditions: $\pi Ls(400)/Ed$(400) = {np.round(np.mean(np.pi*ls_ed_400),3)} +/- {np.round(np.std(np.pi*ls_ed_400), 3)}")
+        plt.title(f"Sky conditions: $\\pi Ls(400)/Ed$(400) = {np.round(np.mean(np.pi*ls_ed_400),3)} +/- {np.round(np.std(np.pi*ls_ed_400), 3)}")
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H'))
-        plt.ylabel('Degree of cloudiness: \n $\pi L_{s}(400)/E_{d}$(400)')
+        plt.ylabel('Degree of cloudiness: \n $\\pi L_{s}(400)/E_{d}$(400)')
         plt.plot_date(timestamp, np.pi*ls_ed_400, color='gray', ms=1, label = 'Failed QC')
         plt.plot_date(timestamp[q==1][0], np.pi*ls_ed_400[q==1][0], color=colors[0,:], ms=3 ,label = 'Passed QC')
 
