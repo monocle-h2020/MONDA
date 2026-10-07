@@ -7,7 +7,7 @@ in HyperCP compatible `L0_HDF' files.
 Sections of the code are harmonised with the `direct' L0_HDF So-Rad download.
 https://github.com/monocle-h2020/so-rad/blob/master/bin/functions/download_functions.py
 
-It is recommended that L0_HDF files in HyperCP are hourly.
+It is recommended that L0_HDF files in HyperCP are ~ hourly or shorter.
 
 Tom Jordan, Oct 2026, tjor@pml.ac.uk
 
@@ -16,17 +16,16 @@ Tom Jordan, Oct 2026, tjor@pml.ac.uk
 
 import sys
 import os
-import numpy as np
-# from monda.sorad import access, plots, qc 
 import datetime
 import logging
 
-#from monda.sorad import access - we cannot use this until the monda pypi is updated
+# from monda.sorad import access - we cannot use this until the monda pypi is updated
 sys.path.append('..')
-import sorad.access as access # this is version of access with Level 0 updates
+import sorad.access as access # temporary work-around for version of sorad.access with Level 0 updates
 
-#import argparse
-import h5py # this is in the
+import argparse 
+
+import h5py # this module (used to creat L0_HDF is currently not in monda pypi). 
 
 log = logging.getLogger('download')
 
@@ -39,13 +38,12 @@ def filename_from_dates(platform_id, start_time, end_time, format='hdf'):
     out_filepath = f"{platform_id}_{start_str}-{end_str}_L0.{format}"
     return out_filepath
 
-
 def save_to_hdf_from_GS(response, platform_id, destination_file):
     
     """
     Save records to a L0_hdf format (for ingestion by HyperCP). 
     
-    Calls `unpack_response' functions which have already done some data 
+    Calls `unpack_response' functions in sorad.access which have already done some data 
     restructuring from the geoserver response
     
     """
@@ -140,22 +138,44 @@ def save_to_hdf_from_GS(response, platform_id, destination_file):
     f.attrs["L0_FILENAME"] = os.path.basename(destination_file)
     f.close()
 
+def parse_args():
+    "Interpret command line arguments"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p','--platform',    required = False, type = str, default = 'PML_SR002', help = "Platform serial number, e.g. PML_SR004.")
+    parser.add_argument('-i','--start_time',  required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
+                                              default =  datetime.datetime(2024,8,15,11,0,0),
+                                              help = "Initial UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
+    parser.add_argument('-e','--end_time',    required = False, type = lambda s: datetime.datetime.strptime(s, '%Y-%m-%d %H:%M:%S'),
+                                              default =  datetime.datetime(2024,8,15,11,59,59),
+                                              help = "Final UTC date/time in format 'YYYY-mm-dd HH:MM:SS'")
+    parser.add_argument('-b','--bbox',        required = False, type = float, nargs='+', default = None, help = "Restrict query to bounding box format [corner1lat corner1lon corner2lat corner2lon]")
+    parser.add_argument('-t','--target',      required = False, type = str, default='.',
+                                              help = "Path to target folder for plots (defaults to working directory)")
+    
+
+    args = parser.parse_args()
+
+    return args
+
+
 if __name__ == '__main__':
 
-    # Initalise key fields for geoserver WFS input
+    # Initalise key fields for geoserver WFS input within script
     platform_id = 'PML_SR002'
     start_time = datetime.datetime(2024,8,15,11,0,0)
     end_time   = datetime.datetime(2024,8,15,11,59,59)
     layer_L0 = 'rsg:sorad_dev_l0_hypercp'    
 
+    # parse_args() Initalise key fields for geoserver WFS input using parse args 
+    # This not done here - see example in so_rad_retrieval_qc_plot_test.py if you want to do this
+    
     # WFS response (this retrives all the required data for L0_HDF)
     response = access.get_wfs(platform = platform_id,
                               timewindow = (start_time, end_time),
                               layer = layer_L0,
                               bbox = None)
     
-
-    # this is a temporary hard coding of SAM id field.
+    # THIS IS A TEMPORARY HARD-CODING of SAM id field.
     # if these are added to the 'rsg:sorad_dev_l0_hypercp' layer, then the rest
     # of the functions can be used as they are
     n_samples = len(response['result'])
@@ -169,7 +189,7 @@ if __name__ == '__main__':
         print(f"{key}: {val}")
 
 
-    # Saves reponse to _L0 HDF where retructuring of the response is done in `save_to_hdf_from_GS'
+    # Saves reponse to _L0 HDF where restructuring of the response is done in `save_to_hdf_from_GS'
     first_time = response['result'][0]['time']
     last_time = response['result'][-1]['time']
     destination_file = filename_from_dates(platform_id, first_time, last_time, format='hdf')
