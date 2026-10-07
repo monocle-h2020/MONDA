@@ -7,8 +7,6 @@ in HyperCP compatible `L0_HDF' files.
 Sections of the code are harmonised with the `direct' L0_HDF So-Rad download.
 https://github.com/monocle-h2020/so-rad/blob/master/bin/functions/download_functions.py
 
-For now, this is a self
-
 It is recommended that L0_HDF files in HyperCP are hourly.
 
 Tom Jordan, Oct 2026, tjor@pml.ac.uk
@@ -16,18 +14,22 @@ Tom Jordan, Oct 2026, tjor@pml.ac.uk
 
 """
 
+import sys
 import os
 import numpy as np
 # from monda.sorad import access, plots, qc 
 import datetime
 import logging
-from monda.sorad import access
+
+#from monda.sorad import access - we cannot use this until the monda pypi is updated
+sys.path.append('..')
+import sorad.access as access # this is version of access with Level 0 updates
+
 #import argparse
 import h5py # this is in the
 
 log = logging.getLogger('download')
 
-#
 def filename_from_dates(platform_id, start_time, end_time, format='hdf'):
     
     """Generate filename from dates"""
@@ -36,84 +38,6 @@ def filename_from_dates(platform_id, start_time, end_time, format='hdf'):
     end_str =   datetime.datetime.strftime(end_time,   "%Y%m%dT%H%M%S")
     out_filepath = f"{platform_id}_{start_str}-{end_str}_L0.{format}"
     return out_filepath
-
-# This could be moved to monda access
-def get_l0spectra(response, spec_id):
-    
-    """
-    Retrieves (Ir)radiance spectrum in digital counts at level 0 from WFS response
-    
-    Pads TriOS Gen 2 sensors (250 pixels on geoserver)
-    to 256 pixels (as required for HyperCP input)
-     
-    """
-    n_records = len(response['result'])
-    n_pixels = len(response['result'][0]['l0_' + spec_id + '_spectrum'])
-    
-    if n_pixels == 256: # Gen 1 have 256 pixels
-        spec_matrix = np.nan*np.ones([n_records, n_pixels]) 
-        i = 0
-        for i, res in enumerate(response['result']):
-            spec = res['l0_' + spec_id + '_spectrum']
-            spec_matrix[i,:] = spec
-   
-    elif n_pixels == 250: # Gen 2 have 250 pixels
-        spec_matrix = np.nan*np.ones([n_records, n_pixels + 6]) # hardcoded (250 + 6 = 256)
-        i = 0
-        for i, res in enumerate(response['result']):
-            spec = res['l0_' + spec_id + '_spectrum']
-            spec_matrix[i,:-6] = spec # hardcoded for now
-            spec_matrix[i,-6:] = 0 # we can't use NaN for no data; hence this is zero
-    else:
-        print('number of pixels is not 256 (G1) or 250 (G2)')
-      
-    spec_matrix = spec_matrix.astype(int) # convert floats to ints
-        
-    return spec_matrix
-
-
-# This could be moved to monda access
-def unpack_response_meta_L0(response):
-    """
-    Unpacks the WFS response metadata ready for L0 HDF formatting
-    
-    """
-
-    time          = [response['result'][i]['time'] for i in range(len(response['result']))]
-    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
-    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
-    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
-    sample_uuid   = [response['result'][i]['sample_uuid'] for i in range(len(response['result']))]
-    # platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))]) 
-    # platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))]) # not needed
-    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
-    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
-    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
-
-    return time, lat, lon, rel_view_az, sample_uuid, gps_speed, tilt_avg, tilt_std
-
-
-def unpack_response_l0_sensor(response, spec_id):
-    """
-    Unpacks the WFS response level 0 sensor data. Includes group and frame fields 
-    using TriOS SAM IDs
-    
-    Wavelength-pixel assignment is done within HyperCP
-    """
-    
-    # names of sensor groups in L0 HDF
-    sensor_group = response['result'][0]['l0_' + spec_id + '_SAM_id'] + '.ini'
-
-    # SAM frame codes
-    sensor_frame = response['result'][0]['l0_' + spec_id + '_SAM_id'].split('_')[1]
-    
-    # sensor inttime
-    sensor_inttime = np.array([response['result'][i]['l0_' + spec_id + '_inttime'] for i in range(len(response['result']))])
-
-    # sensor level 0 data
-    sensor_l0 = get_l0spectra(response, spec_id) 
-    
-    return sensor_group, sensor_frame, sensor_inttime, sensor_l0
 
 
 def save_to_hdf_from_GS(response, platform_id, destination_file):
@@ -130,7 +54,7 @@ def save_to_hdf_from_GS(response, platform_id, destination_file):
 
     # extract sorad metadata fields from geoserver response 
     record_time, latitude, longitude, rel_view_az, \
-    sample_uuid, gps_speed, tilt_avg, tilt_std = unpack_response_meta_L0(response)
+    sample_uuid, gps_speed, tilt_avg, tilt_std = access.unpack_response_meta_L0(response)
   
     # compute HyperCP datetag & timetag fields
     datetag2 = [float(datetime.datetime.strftime(record_time[i], '%Y%j')) for i in range(len(record_time))]
@@ -172,9 +96,9 @@ def save_to_hdf_from_GS(response, platform_id, destination_file):
     meta.create_dataset('SAMPLE_UUID', data=sample_uuid, dtype = h5py.string_dtype())
     
     # extract sorad sensor L0 fields from geoserver response 
-    ls_group, ls_frame, ls_intime, ls_l0 = unpack_response_l0_sensor(response, 'ls')
-    ed_group, ed_frame, ed_intime, ed_l0 = unpack_response_l0_sensor(response, 'ed')
-    lt_group, lt_frame, lt_intime, lt_l0 = unpack_response_l0_sensor(response, 'lt')
+    ls_group, ls_frame, ls_intime, ls_l0 = access.unpack_response_l0_sensor(response, 'ls')
+    ed_group, ed_frame, ed_intime, ed_l0 = access.unpack_response_l0_sensor(response, 'ed')
+    lt_group, lt_frame, lt_intime, lt_l0 = access.unpack_response_l0_sensor(response, 'lt')
     
     # Sensor groups
     # naming convention: ES (ed), LI (ls), LT (lt)
@@ -218,12 +142,13 @@ def save_to_hdf_from_GS(response, platform_id, destination_file):
 
 if __name__ == '__main__':
 
+    # Initalise key fields for geoserver WFS input
     platform_id = 'PML_SR002'
     start_time = datetime.datetime(2024,8,15,11,0,0)
     end_time   = datetime.datetime(2024,8,15,11,59,59)
     layer_L0 = 'rsg:sorad_dev_l0_hypercp'    
 
-    # WFS response
+    # WFS response (this retrives all the required data for L0_HDF)
     response = access.get_wfs(platform = platform_id,
                               timewindow = (start_time, end_time),
                               layer = layer_L0,
@@ -243,6 +168,8 @@ if __name__ == '__main__':
     for key, val in response['result'][0].items():
         print(f"{key}: {val}")
 
+
+    # Saves reponse to _L0 HDF where retructuring of the response is done in `save_to_hdf_from_GS'
     first_time = response['result'][0]['time']
     last_time = response['result'][-1]['time']
     destination_file = filename_from_dates(platform_id, first_time, last_time, format='hdf')

@@ -264,3 +264,81 @@ def meta_dataframe(sample_uuids, platform_ids, time, lat, lon, gps_speeds, tilt_
     d['q_3'] = q_3  # Mask after step (iii) QC
 
     return d
+
+# Metadata structuring for L0 HDF
+def unpack_response_meta_L0(response):
+    """
+    Unpacks the WFS response metadata ready for L0 HDF formatting
+    
+    """
+
+    time          = [response['result'][i]['time'] for i in range(len(response['result']))]
+    lat           = np.array([response['result'][i]['lat'] for i in range(len(response['result']))])
+    lon           = np.array([response['result'][i]['lon'] for i in range(len(response['result']))])
+    rel_view_az   = np.array([response['result'][i]['rel_view_az'] for i in range(len(response['result']))])
+    sample_uuid   = [response['result'][i]['sample_uuid'] for i in range(len(response['result']))]
+    # platform_id   = np.array([response['result'][i]['platform_id'] for i in range(len(response['result']))]) 
+    # platform_uuid = np.array([response['result'][i]['platform_uuid'] for i in range(len(response['result']))]) # not needed
+    gps_speed     = np.array([response['result'][i]['gps_speed'] for i in range(len(response['result']))])
+    tilt_avg      = np.array([response['result'][i]['tilt_avg'] for i in range(len(response['result']))])
+    tilt_std      = np.array([response['result'][i]['tilt_std'] for i in range(len(response['result']))])
+
+    return time, lat, lon, rel_view_az, sample_uuid, gps_speed, tilt_avg, tilt_std
+
+
+# Retrieves spectra for L0 HDF
+def get_l0spectra(response, spec_id):
+    
+    """
+    Retrieves (Ir)radiance spectrum in digital counts at level 0 from WFS response
+    
+    Pads TriOS Gen 2 sensors (250 pixels on geoserver)
+    to 256 pixels (as required for HyperCP input)
+     
+    """
+    n_records = len(response['result'])
+    n_pixels = len(response['result'][0]['l0_' + spec_id + '_spectrum'])
+    
+    if n_pixels == 256: # Gen 1 have 256 pixels
+        spec_matrix = np.nan*np.ones([n_records, n_pixels]) 
+        i = 0
+        for i, res in enumerate(response['result']):
+            spec = res['l0_' + spec_id + '_spectrum']
+            spec_matrix[i,:] = spec
+   
+    elif n_pixels == 250: # Gen 2 have 250 pixels
+        spec_matrix = np.nan*np.ones([n_records, n_pixels + 6]) # hardcoded (250 + 6 = 256)
+        i = 0
+        for i, res in enumerate(response['result']):
+            spec = res['l0_' + spec_id + '_spectrum']
+            spec_matrix[i,:-6] = spec 
+            spec_matrix[i,-6:] = 0 # we can't use NaN for no data; hence this is zero
+    else:
+        print('number of pixels is not 256 (G1) or 250 (G2)')
+      
+    spec_matrix = spec_matrix.astype(int) # convert floats to ints
+        
+    return spec_matrix
+
+# Unpacks Level 0 Sensor data for HDF
+def unpack_response_l0_sensor(response, spec_id):
+    """
+    Unpacks the WFS response level 0 sensor data. Includes group and frame fields 
+    using TriOS SAM IDs
+    
+    Wavelength-pixel assignment is done within HyperCP
+    """
+    
+    # names of sensor groups in L0 HDF
+    sensor_group = response['result'][0]['l0_' + spec_id + '_SAM_id'] + '.ini'
+
+    # SAM frame codes
+    sensor_frame = response['result'][0]['l0_' + spec_id + '_SAM_id'].split('_')[1]
+    
+    # sensor inttime
+    sensor_inttime = np.array([response['result'][i]['l0_' + spec_id + '_inttime'] for i in range(len(response['result']))])
+
+    # sensor level 0 data
+    sensor_l0 = get_l0spectra(response, spec_id) 
+    
+    return sensor_group, sensor_frame, sensor_inttime, sensor_l0
