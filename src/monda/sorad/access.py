@@ -328,12 +328,12 @@ def unpack_response_l0_sensor(response, spec_id):
     
     Wavelength-pixel assignment is done within HyperCP
     """
-    
+
     # names of sensor groups in L0 HDF
-    sensor_group = response['result'][0]['l0_' + spec_id + '_SAM_id'] + '.ini'
+    sensor_group = response['result'][0]['l0_' + spec_id + '_detector_id'] + '_SAM.ini'
 
     # SAM frame codes
-    sensor_frame = response['result'][0]['l0_' + spec_id + '_SAM_id'].split('_')[1]
+    sensor_frame = response['result'][0]['l0_' + spec_id + '_detector_id']
     
     # sensor inttime
     sensor_inttime = np.array([response['result'][i]['l0_' + spec_id + '_inttime'] for i in range(len(response['result']))])
