@@ -175,7 +175,8 @@ if __name__ == '__main__':
     response = access.get_wfs(platform = platform_id,
                               timewindow = (start_time, end_time),
                               layer = layer_L0,
-                              bbox = None)
+                              bbox = None,
+                              )
     
     # show first record
     for key, val in response['result'][0].items():
