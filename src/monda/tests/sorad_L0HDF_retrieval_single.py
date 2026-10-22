@@ -5,11 +5,13 @@ This script is an example downloader for So-Rad data that has been structured
 in HyperCP compatible `L0_HDF' files.
 
 Sections of the code are harmonised with the `direct' L0_HDF So-Rad download.
-https://github.com/monocle-h2020/so-rad/blob/master/bin/functions/download_functions.py
+https://github.com/monocle-h2020/so-rad/blob/master/bin/functions/download_functions.py.
+
+Data from the TARA TREC 2024 cruise are used in the examples: https://essd.copernicus.org/preprints/essd-2026-623/.
 
 It is recommended that L0_HDF files in HyperCP are ~ hourly or shorter.
 
-Tom Jordan, Oct 2026, tjor@pml.ac.uk
+Tom Jordan, Oct 2026, tjor@pml.ac.uk.
 
 
 """
@@ -164,7 +166,7 @@ if __name__ == '__main__':
     platform_id = 'PML_SR002'
     start_time = datetime.datetime(2024,8,15,11,0,0)
     end_time   = datetime.datetime(2024,8,15,11,59,59)
-    layer_L0 = 'rsg:sorad_dev_l0_hypercp'    
+    layer_L0 = 'rsg:sorad_dev_l0_hypercp_v1'
 
     # parse_args() Initalise key fields for geoserver WFS input using parse args 
     # This not done here - see example in so_rad_retrieval_qc_plot_test.py if you want to do this
@@ -173,17 +175,9 @@ if __name__ == '__main__':
     response = access.get_wfs(platform = platform_id,
                               timewindow = (start_time, end_time),
                               layer = layer_L0,
-                              bbox = None)
+                              bbox = None,
+                              )
     
-    # THIS IS A TEMPORARY HARD-CODING of SAM id field.
-    # if these are added to the 'rsg:sorad_dev_l0_hypercp' layer, then the rest
-    # of the functions can be used as they are
-    n_samples = len(response['result'])
-    for i in range(n_samples):
-        response['result'][i]['l0_ed_SAM_id'] = 'SAM_874F'    
-        response['result'][i]['l0_ls_SAM_id'] = 'SAM_874C'
-        response['result'][i]['l0_lt_SAM_id'] = 'SAM_874E'
-
     # show first record
     for key, val in response['result'][0].items():
         print(f"{key}: {val}")
