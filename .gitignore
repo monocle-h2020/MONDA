@@ -8,6 +8,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Pixi
+.pixi/
+pixi.lock
+
 # C extensions
 *.so
 
