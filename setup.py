@@ -29,5 +29,5 @@ setup(
                         'pandas',
                         'datetime',
                         'argparse',
-                        'dateutil'],
+                        'python-dateutil'],
 )
