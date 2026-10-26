@@ -162,7 +162,7 @@ def get_wfs(count=1000, platform=None, timewindow=None, layer='rsg:sorad_public_
                 if isinstance(val, str):
                     if val.count(',') > 0:  # convert comma-separated strings to numpy arrays
                         feature[key] = np.array([float(w) for w in val.split(',')])
-                if any(word in key for word in ["date", "time"]):  # try to convert into timestamp
+                if any(word in key for word in ["date", "time"]) and "inttime" not in key:  # try to convert into timestamp
                     try:
                         feature[key] = str2datetime(val)
                     except Exception as err:
